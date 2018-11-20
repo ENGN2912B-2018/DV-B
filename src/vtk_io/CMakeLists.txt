@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(DV_B)
+project(vtk_io)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -33,9 +33,7 @@ vtk_module_config(VTK
 endif()
 include(${VTK_USE_FILE})
 
-include_directories(src)
-add_subdirectory(src)
-
-add_executable(test_io test_load_data.cpp)
-target_link_libraries(test_io vtk_io)
-
+##add_executable(data_load data_load.h data_load.cpp)
+add_library(vtk_io data_load.h data_load.cpp)
+set_target_properties(vtk_io PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(vtk_io ${VTK_LIBRARIES})
