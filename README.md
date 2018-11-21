@@ -31,9 +31,9 @@ Download and compile steps:
 
 
 # How to use
-The program is still under construction, after we finsih the program. It is expected that you can have a launch file in build directory, which can start a window, where the visualization result is displayed. You can choose how the data is visualized( stream line, stream surface and cutting plane) and which part of the data you want to see. The detailed instruction will come out after we finish the project. It is also expected that you can have a data transform program to transform some kinds of plain data into the data that we can handle. 
+The program is still under construction. After we finish the program, it is expected that you can have a launch file in the build directory, which can start a window, where the visualization result is displayed. You can choose how the data is visualized( streamline, stream surface and cutting plane) and which part of the data you want to see. The detailed instruction will come out after we finish the project. It is also expected that you can have a data transform program to transform some kinds of plain data into the data that we can handle. 
 
 # dataset
-The test dataset we are using coms from compute Canada(https://www.computecanada.ca/).
+The test dataset we are using comes from Compute Canada(https://www.computecanada.ca/).
 
 Download link: http://bit.ly/2gAEtwM
