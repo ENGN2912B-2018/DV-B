@@ -1,6 +1,8 @@
 # Data Visualization-Team B: A Generic data visualization tool for air flow data
+
 Teammates: Yuqi Chai, Zhiyu Wang, Yabo Yan
-#Program Design and overview:
+
+# Program Design and overview:
 
 ![program architecture graph](https://github.com/ENGN2912B-2018/DV-B/blob/master/Architecture.png)
 
@@ -33,4 +35,5 @@ The program is still under construction, after we finsih the program. It is expe
 
 # dataset
 The test dataset we are using coms from compute Canada(https://www.computecanada.ca/).
-http://bit.ly/2gAEtwM
+
+Download link: http://bit.ly/2gAEtwM
