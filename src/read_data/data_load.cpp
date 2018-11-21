@@ -25,7 +25,7 @@
 #include "data_load.h"
 using namespace std;
 
-template <class TReader> vtkDataSet *ReadAnXMLFile(const char*fileName)
+template <class TReader> vtkDataSet *ReadAnXMLFile(const char*fileName)  //get this part of the code from vtk code examples
 {
       vtkSmartPointer<TReader> reader = vtkSmartPointer<TReader>::New();
       reader->SetFileName(fileName);
@@ -34,7 +34,7 @@ template <class TReader> vtkDataSet *ReadAnXMLFile(const char*fileName)
       return vtkDataSet::SafeDownCast(reader->GetOutput());
 }
 
-int vtk_io :: load_data(string filename){
+int vtk_io :: load_data(string filename){    //get this part of code from vtk code examples with slight modification 
     //if (filename.size()<2){
     //    std::cerr << "Usage: " << " XMLFile1 XMLFile2 ..." << std::endl;
     //}
@@ -43,7 +43,7 @@ int vtk_io :: load_data(string filename){
     cout<<extension<<endl;
     if (extension == ".vtu")
     {
-      dataSet = ReadAnXMLFile<vtkXMLUnstructuredGridReader> (filename.c_str());
+      dataSet = ReadAnXMLFile<vtkXMLUnstructuredGridReader> (filename.c_str()); //read the vtu file with vtkXMLUnstructuredGridTrader
     }
     else if (extension == ".vtp")
     {
@@ -75,71 +75,13 @@ int vtk_io :: load_data(string filename){
     int numberOfPoints = dataSet->GetNumberOfPoints();
 
     // Generate a report
-    std::cout << "------------------------" << std::endl;
+    std::cout << "------------------------" << std::endl;  //valid the data that has been read
     std::cout << filename << std::endl
          << " contains a " << std::endl
          << dataSet->GetClassName()
          <<  " that has " << numberOfCells << " cells"
          << " and " << numberOfPoints << " points." << std::endl;
-    typedef std::map<int,int> CellContainer;
-    CellContainer cellMap;
-    for (int i = 0; i < numberOfCells; i++)
-    {
-      cellMap[dataSet->GetCellType(i)]++;
-    }
 
-    CellContainer::const_iterator it = cellMap.begin();
-    while (it != cellMap.end())
-    {
-      std::cout << "\tCell type "
-           << vtkCellTypes::GetClassNameFromTypeId(it->first)
-           << " occurs " << it->second << " times." << std::endl;
-      ++it;
-    }
-
-    // Now check for point data
-    vtkPointData *pd = dataSet->GetPointData();
-    if (pd)
-    {
-      std::cout << " contains point data with "
-           << pd->GetNumberOfArrays()
-           << " arrays." << std::endl;
-      for (int i = 0; i < pd->GetNumberOfArrays(); i++)
-      {
-        std::cout << "\tArray " << i
-             << " is named "
-             << (pd->GetArrayName(i) ? pd->GetArrayName(i) : "NULL")
-             << std::endl;
-      }
-    }
-    // Now check for cell data
-    vtkCellData *cd = dataSet->GetCellData();
-    if (cd)
-    {
-      std::cout << " contains cell data with "
-           << cd->GetNumberOfArrays()
-           << " arrays." << std::endl;
-      for (int i = 0; i < cd->GetNumberOfArrays(); i++)
-      {
-        std::cout << "\tArray " << i
-             << " is named "
-             << (cd->GetArrayName(i) ? cd->GetArrayName(i) : "NULL")
-             << std::endl;
-      }
-    }
-    // Now check for field data
-    if (dataSet->GetFieldData())
-    {
-      std::cout << " contains field data with "
-           << dataSet->GetFieldData()->GetNumberOfArrays()
-           << " arrays." << std::endl;
-      for (int i = 0; i < dataSet->GetFieldData()->GetNumberOfArrays(); i++)
-      {
-        std::cout << "\tArray " << i
-             << " is named " << dataSet->GetFieldData()->GetArray(i)->GetName()
-             << std::endl;
-      }
-    }
     this->data_ = dataSet;
   return EXIT_SUCCESS;
 } 

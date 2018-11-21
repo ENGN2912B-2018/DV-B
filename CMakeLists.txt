@@ -36,6 +36,6 @@ include(${VTK_USE_FILE})
 include_directories(src)
 add_subdirectory(src)
 
-add_executable(test_io test_load_data.cpp)
-target_link_libraries(test_io vtk_io)
+include_directories(test)
+add_subdirectory(test)
 
