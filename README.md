@@ -16,7 +16,7 @@ gcc 4.8.3 or newer
 
 QT
 
-compile steps:
+Download and compile steps:
 1. git clone [repository url]
 
 2. cd DV-B
