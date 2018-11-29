@@ -19,57 +19,64 @@
 #include <vtkFieldData.h>
 #include <vtkCellTypes.h>
 #include <vtksys/SystemTools.hxx>
-
+#include <vtkWarpVector.h>
 #include <map>
 
 #include "data_load.h"
 using namespace std;
 
-template <class TReader> vtkDataSet *ReadAnXMLFile(const char*fileName)  //get this part of the code from vtk code examples
+template <class TReader> vtkAlgorithmOutput *ReadAnXMLFile(const char*fileName, vtkDataSet* &dataSet)  //get this part of the code from vtk code examples
 {
       vtkSmartPointer<TReader> reader = vtkSmartPointer<TReader>::New();
       reader->SetFileName(fileName);
       reader->Update();
       reader->GetOutput()->Register(reader);
-      return vtkDataSet::SafeDownCast(reader->GetOutput());
+      //data_pipe = reader->GetOutputPort();
+     // vtkDataSet* res = vtkDataSet :: New();
+      //vtkDataSet::SafeDownCast(reader->GetOutput());
+      dataSet = vtkDataSet::SafeDownCast(reader->GetOutput());
+      return reader->GetOutputPort();
 }
 
-int vtk_io :: load_data(string filename){    //get this part of code from vtk code examples with slight modification 
+int data_load :: load_data(string filename){    //get this part of code from vtk code examples with slight modification 
     //if (filename.size()<2){
     //    std::cerr << "Usage: " << " XMLFile1 XMLFile2 ..." << std::endl;
     //}
-    vtkDataSet *dataSet;
+
     string extension = vtksys::SystemTools::GetFilenameLastExtension(filename);
     cout<<extension<<endl;
+    vtkAlgorithmOutput* data_pipe;
+    vtkDataSet *dataSet;
     if (extension == ".vtu")
     {
-      dataSet = ReadAnXMLFile<vtkXMLUnstructuredGridReader> (filename.c_str()); //read the vtu file with vtkXMLUnstructuredGridTrader
+      data_pipe = ReadAnXMLFile<vtkXMLUnstructuredGridReader> (filename.c_str(),dataSet); //read the vtu file with vtkXMLUnstructuredGridTrader
     }
     else if (extension == ".vtp")
     {
-      dataSet = ReadAnXMLFile<vtkXMLPolyDataReader> (filename.c_str());
+      data_pipe = ReadAnXMLFile<vtkXMLPolyDataReader> (filename.c_str(),dataSet);
     }
     else if (extension == ".vts")
     {
-      dataSet = ReadAnXMLFile<vtkXMLStructuredGridReader> (filename.c_str());
+      data_pipe = ReadAnXMLFile<vtkXMLStructuredGridReader> (filename.c_str(),dataSet);
     }
     else if (extension == ".vtr")
     {
-      dataSet = ReadAnXMLFile<vtkXMLRectilinearGridReader> (filename.c_str());
+      data_pipe = ReadAnXMLFile<vtkXMLRectilinearGridReader> (filename.c_str(), dataSet);
     }
     else if (extension == ".vti")
     {
-      dataSet = ReadAnXMLFile<vtkXMLImageDataReader> (filename.c_str());
+      data_pipe = ReadAnXMLFile<vtkXMLImageDataReader> (filename.c_str(), dataSet);
     }
     else if (extension == ".vtk")
     {
-      dataSet = ReadAnXMLFile<vtkDataSetReader> (filename.c_str());
+      data_pipe = ReadAnXMLFile<vtkDataSetReader> (filename.c_str(), dataSet);
     }
     else
     {
       std::cerr << filename << " Unknown extension: " << extension << std::endl;
       return EXIT_FAILURE;
     }
+    
 
     int numberOfCells = dataSet->GetNumberOfCells();
     int numberOfPoints = dataSet->GetNumberOfPoints();
@@ -83,12 +90,16 @@ int vtk_io :: load_data(string filename){    //get this part of code from vtk co
          << " and " << numberOfPoints << " points." << std::endl;
 
     this->data_ = dataSet;
+    this->data_pipe_ = data_pipe;
   return EXIT_SUCCESS;
 } 
 
-vtkDataSet* vtk_io::get_data(){
+vtkDataSet* data_load::get_data(){
     return this->data_;
 }
-vtk_io::~vtk_io(){
+vtkAlgorithmOutput* data_load::get_data_pipe(){
+    return this->data_pipe_;
+}
+data_load::~data_load(){
     this->data_->Delete();
 }

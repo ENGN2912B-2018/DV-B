@@ -24,12 +24,14 @@
 
 
 using  std::string;
-class vtk_io{
+class data_load{
     private:
         vtkDataSet* data_;
+        vtkAlgorithmOutput* data_pipe_;
     public:
         int load_data(string file_path);
         vtkDataSet* get_data();
-        ~vtk_io();
+        vtkAlgorithmOutput* get_data_pipe();
+        ~data_load();
 };
 
