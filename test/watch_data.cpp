@@ -28,7 +28,7 @@
 #include <vtkRenderWindowInteractor.h>
 #include <vtkVertexGlyphFilter.h>
 #include <vtkScalarBarActor.h>
-
+#include <vtkCamera.h>
 //#include "vtkScalarBarActor.h"
 #include <map>
 using namespace std;
@@ -56,7 +56,7 @@ int main(){
     vtkDataArray *dis_arr = data->GetFieldData()->GetArray(0);
     cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
-    data->GetPointData()->RemoveArray(0);
+    data->GetPointData()->RemoveArray(0);  // delete the data that we do not want to visualize.
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
@@ -96,12 +96,12 @@ int main(){
     vertexFilter->Update();
     cout<<"input_over"<<endl;
     
-    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
-    ploydata->ShallowCopy(vertexFilter->GetOutput());
+    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
+    ploydata->ShallowCopy(vertexFilter->GetOutput());   
 
     
 
-    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
+    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0)); // set the scalar value for visualize
 
     cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
     vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -124,12 +124,17 @@ int main(){
     ren1 -> SetBackground(0.1,0.2,0.4);
     ren1 -> AddActor(planeActor);
     ren1->AddActor2D(scalarActor);
-    
+
     cout<<"vtkrender"<<endl;
     vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
     renWin->AddRenderer(ren1);
     renWin->SetSize(300,150);
 
+    vtkCamera *camera = ren1->GetActiveCamera();   //set the camera
+    camera->Azimuth(0);
+    camera->Elevation(0);
+    camera->SetDistance(200);
+    //renWin -> Render();
     cout<< "window"<<endl;
     vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
     iren -> SetRenderWindow (renWin);
