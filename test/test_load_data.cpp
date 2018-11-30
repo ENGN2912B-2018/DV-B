@@ -20,6 +20,13 @@
 #include <vtkWarpVector.h>
 #include <vtkCastToConcrete.h>
 #include <vtkActor.h>
+#include <vtkDataSetMapper.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkCommand.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkVertexGlyphFilter.h>
+
 
 #include <map>
 using namespace std;
@@ -31,53 +38,91 @@ int main(){
         cout<<"load success"<<endl;
     }
     vtkDataSet *data = input.get_data();
-    data->DebugOn();
+   // data->DebugOn();
 
-    vtkLookupTable *lut = vtkLookupTable::New();
+    //vtkDataSet *data_q = vtkDataSet :: New();
+
+    vtkAbstractArray *q_array = data->GetPointData()->GetArray(1);
+    
+
+    vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     lut->SetNumberOfColors(64);
-    lut->SetTableRange(-15,35);
+    lut->SetTableRange(-100,350);
     lut->Build();
-    lut->DebugOn();
+    //lut->DebugOn();
 
     vtkDataArray *dis_arr = data->GetFieldData()->GetArray(0);
     cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
-    double r = 10, g = 10, b = 10; 
-    for(int i = 0; i< 16;i ++){
+    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
+    data->GetPointData()->RemoveArray(0);
+    data->GetPointData()->RemoveArray(1);
+    data->GetPointData()->RemoveArray(1);
+    data->GetPointData()->RemoveArray(1);
+    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
+    double r = 0, g = 0, b = 0; 
+    for(int i = 0; i< 16; i++){
         lut->SetTableValue(i,r,g,b);
-        lut->SetTableValue(i+1,r+10,g+10,b+10);
-        lut->SetTableValue(i+2,r+20,g+20,b+20);
-        lut->SetTableValue(i+3,r+30,g+30,b+30);
-        r += 40;
-        b += 40;
-        g += 40;
+        lut->SetTableValue(i+1,r+0.001,g+0.001,b+0.001);
+        lut->SetTableValue(i+2,r+0.002,g+0.002,b+0.002);
+        lut->SetTableValue(i+3,r+0.003,g+0.003,b+0.003);
+        r += 0.004;
+        b += 0.004;
+        g += 0.004;
     }
-    vtkCastToConcrete *cast = vtkCastToConcrete :: New();
+    //vtkCastToConcrete *cast = vtkCastToConcrete :: New();
     
     //vtkDataSetToDataObjectFilter *ds2do = vtkDataSetToDataObjectFilter::New();
     //cout<< "ds2do" <<endl;
     //ds2do->DebugOn();
 
     //ds2do->SetInputConnection(data_pipe);
-    vtkWarpVector *warp = vtkWarpVector::New();
-    cout<< "warp" <<endl;
+    //vtkWarpVector *warp = vtkWarpVector::New();
+    //cout<< "warp" <<endl;
     //warp->SetInputConnection(ds2do->GetOutputPort());
-    warp->SetInputData(data);
-    vtkConnectivityFilter *connect = vtkConnectivityFilter :: New();
-    connect->DebugOn();
-    cout<< "connect" <<endl;
-    connect->SetInputConnection(warp->GetOutputPort());
-    connect->SetExtractionModeToAllRegions();
+    //warp->SetInputData(data);
+    //vtkConnectivityFilter *connect = vtkConnectivityFilter :: New();
+    //connect->DebugOn();
+    //cout<< "connect" <<endl;
+    //connect->SetInputConnection(warp->GetOutputPort());
+    //connect->SetExtractionModeToAllRegions();
 
+    //vtkPolyData *data_grid = vtkPolyData :: SafeDownCast(data);
+    //cout<<data_grid->GetNumberOfPolys()<<endl;
+    vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+    cout<<"set_input"<<endl;
+    vertexFilter->SetInputData(data);
+    vertexFilter->Update();
+    cout<<"input_over"<<endl;
+    
+    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
+    ploydata->ShallowCopy(vertexFilter->GetOutput());
 
-    vtkPolyDataMapper *planeMapper = vtkPolyDataMapper::New();
+    cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
+    vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
     planeMapper->SetLookupTable(lut);
-    planeMapper->DebugOn();
-
-    planeMapper->SetInputConnection(connect->GetOutputPort());
-    vtkActor *planeActor = vtkActor :: New();
+    //planeMapper->DebugOn();
+    planeMapper->SetInputData(ploydata);
+    //planeMapper->SetScalarModeToUseCellData();
+    
+    cout<< "actor" <<endl;
+    vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor->SetMapper(planeMapper);
+    
+    cout<< "vtkrender"<<endl;
+    vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
+    ren1 -> SetBackground(0.1,0.2,0.4);
+    ren1->AddActor(planeActor);
+    
+    cout<<"vtkrender"<<endl;
+    vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
+    renWin->AddRenderer(ren1);
+    renWin->SetSize(300,150);
 
-
-
+    cout<< "window"<<endl;
+    vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
+    iren -> SetRenderWindow (renWin);
+    //iren->AddObserver(vtkCommand::InteractionEvent,myCallback);
+    iren->Initialize();
+    iren->Start();
     return 0;
 }
