@@ -1,7 +1,13 @@
-#include "firsttest.h"
+#include "EventQtSlotConnect.h"
+#include "data_load.h"
+
 #include "vtkGenericOpenGLRenderWindow.h"
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkSphereSource.h>
 #include <vtkEventQtSlotConnect.h>
 #include <vtkInteractorStyleTrackballActor.h>
 #include <vtkSmartPointer.h>
@@ -24,27 +30,22 @@
 #include <vtkCastToConcrete.h>
 #include <vtkActor.h>
 #include <vtkDataSetMapper.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindow.h>
 #include <vtkCommand.h>
-#include <vtkRenderWindowInteractor.h>
 #include <vtkVertexGlyphFilter.h>
 #include <vtkScalarBarActor.h>
+
 using namespace std;
 // Constructor
-firsttest::firsttest(string fileName)
+EventQtSlotConnect::EventQtSlotConnect()
 {
-  // read data
-  string file_path = fileName;
+  string file_path = "../../data/air.vtu";
   data_load input;
-  if(!input.load_data(file_path){
-    std::cout << "Loading Succeeded." << std::endl;
+  if(!input.load_data(file_path)){
+    cout << "Loading succeeded." << endl;
   }
-  // setup
+
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
   this->qvtkWidget->SetRenderWindow(renderWindow);
-
-  // continue data processing -> ultimately it leads to a vtkRenderer
 
   vtkDataSet *data = input.get_data();
   vtkAbstractArray *q_array = data->GetPointData()->GetArray(1);
@@ -105,21 +106,22 @@ firsttest::firsttest(string fileName)
   ren1 -> AddActor(planeActor);
   ren1->AddActor2D(scalarActor);
 
-  cout << "vtkrender" << endl;
-  vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
-  renWin->AddRenderer(ren1);
-  renWin->SetSize(300,150);
-  // ABOVE: WE SOMEHOW HAVE A VTKRENDERER.
-  // NEXT: WE WANT TO CONNECT QT AND VTK
-  this->qvtkWidget->GetRendererWindow()->AddRenderer(renWin);
+  //cout << "vtkrender" << endl;
+  //vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
+  //renWin->AddRenderer(ren1);
+  //renWin->SetSize(300,150);
 
-  this->Connections->Connect(this->qvtkWidget->GetRendererWindow()->GetInteractor(),
+  // render
+  this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+
+  this->Connections->Connect(this->qvtkWidget->GetRenderWindow()->GetInteractor(),
   vtkCommand::LeftButtonPressEvent,
   this,
   SLOT(slot_clicked(vtkObject*, unsigned long, void*, void*)));
+
 };
 
-void firsttest::slot_clicked(vtkObject*, unsigned long, void*, void*)
+void EventQtSlotConnect::slot_clicked(vtkObject*, unsigned long, void*, void*)
 {
   std::cout << "Clicked." << std::endl;
 }

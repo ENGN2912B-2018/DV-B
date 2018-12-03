@@ -1,17 +1,16 @@
 #include <QApplication>
 #include <QSurfaceFormat>
-#include "firsttest.h"
-// should include read_data module
+#include "EventQtSlotConnect.h"
 
 int main(int argc, char** argv)
 {
-  string file_path = "../";
+  // needed to ensure appropriate OpenGL context is created for VTK rendering.
   QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
 
   QApplication app(argc, argv);
 
-  firsttest test1(file_path);
-  test1.show()
+  EventQtSlotConnect eventQtSlotConnect;
+  eventQtSlotConnect.show();
 
   return app.exec();
 }

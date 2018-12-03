@@ -1,7 +1,7 @@
-#ifndef FIRSTTEST_H
-#define FIRSTTEST_H
+#ifndef EventQtSlotConnect_H
+#define EventQtSlotConnect_H
 
-#include "ui_firsttest.h"
+#include "ui_EventQtSlotConnect.h"
 
 #include <QMainWindow>
 
@@ -9,16 +9,19 @@
 #include <vtkObject.h>
 class vtkEventQtSlotConnect;
 
-class firsttest : public QMainWindow, private Ui::firsttest
+class EventQtSlotConnect : public QMainWindow, private Ui::EventQtSlotConnect
 {
   Q_OBJECT
 public:
-  firsttest(string fileName);
+
+  EventQtSlotConnect();
 
 public slots:
+
   void slot_clicked(vtkObject*, unsigned long, void*, void*);
 
 private:
+
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
 };
 
