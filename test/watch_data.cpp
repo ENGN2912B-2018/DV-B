@@ -56,7 +56,7 @@ int main(){
     vtkDataArray *dis_arr = data->GetFieldData()->GetArray(0);
     cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
-    data->GetPointData()->RemoveArray(0);  // delete the data that we do not want to visualize.
+    data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
@@ -130,10 +130,10 @@ int main(){
     renWin->AddRenderer(ren1);
     renWin->SetSize(300,150);
 
-    vtkCamera *camera = ren1->GetActiveCamera();   //set the camera
-    camera->Azimuth(0);
-    camera->Elevation(0);
-    camera->SetDistance(200);
+    //vtkCamera *camera = ren1->GetActiveCamera();   //set the camera
+    //camera->Azimuth(0);
+    //camera->Elevation(0);
+    //camera->SetDistance(200);
     //renWin -> Render();
     cout<< "window"<<endl;
     vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
