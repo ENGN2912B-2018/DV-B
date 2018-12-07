@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
+project(read_data)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -32,5 +33,6 @@ vtk_module_config(VTK
 endif()
 include(${VTK_USE_FILE})
 
-include_directories(read_data)
-add_subdirectory(read_data)
+add_library(display show_data.h show_data.cpp)
+set_target_properties(display PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(display ${VTK_LIBRARIES})
