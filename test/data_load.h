@@ -24,6 +24,7 @@
 
 
 using  std::string;
+
 class data_load{
     private:
         vtkDataSet* data_;
