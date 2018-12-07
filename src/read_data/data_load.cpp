@@ -101,5 +101,5 @@ vtkAlgorithmOutput* data_load::get_data_pipe(){
     return this->data_pipe_;
 }
 data_load::~data_load(){
-    this->data_->Delete();
+  //  this->data_->Delete();
 }
