@@ -47,49 +47,19 @@ int main(){
     vtkAbstractArray *q_array = data->GetPointData()->GetArray(1);
     
 
-    vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-    lut->SetNumberOfColors(64);
-    lut->SetTableRange(-100,350);
-    lut->Build();
+
     //lut->DebugOn();
 
     vtkDataArray *dis_arr = data->GetFieldData()->GetArray(0);
     cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
-    data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
+    data->GetPointData()->RemoveArray(0);  // delete the data that we do not want to visualize.
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
-    double r = 0, g = 0, b = 0; 
-    for(int i = 0; i< 61 ; i+=4){
-        lut->SetTableValue(i,r,g,b);
-        lut->SetTableValue(i+1,r+0.01,g+0.01,b+0.01);
-        lut->SetTableValue(i+2,r+0.02,g+0.02,b+0.02);
-        lut->SetTableValue(i+3,r+0.03,g+0.03,b+0.03);
-        r += 0.04;
-        b += 0.04;
-        g += 0.04;
-    }
-    //vtkCastToConcrete *cast = vtkCastToConcrete :: New();
-    
-    //vtkDataSetToDataObjectFilter *ds2do = vtkDataSetToDataObjectFilter::New();
-    //cout<< "ds2do" <<endl;
-    //ds2do->DebugOn();
 
-    //ds2do->SetInputConnection(data_pipe);
-    //vtkWarpVector *warp = vtkWarpVector::New();
-    //cout<< "warp" <<endl;
-    //warp->SetInputConnection(ds2do->GetOutputPort());
-    //warp->SetInputData(data);
-    //vtkConnectivityFilter *connect = vtkConnectivityFilter :: New();
-    //connect->DebugOn();
-    //cout<< "connect" <<endl;
-    //connect->SetInputConnection(warp->GetOutputPort());
-    //connect->SetExtractionModeToAllRegions();
 
-    //vtkPolyData *data_grid = vtkPolyData :: SafeDownCast(data);
-    //cout<<data_grid->GetNumberOfPolys()<<endl;
     vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
     cout<<"set_input"<<endl;
     vertexFilter->SetInputData(data);
@@ -108,15 +78,78 @@ int main(){
     //planeMapper->SetLookupTable(lut);
     //planeMapper->DebugOn();
     planeMapper->SetInputData(ploydata);
-    planeMapper -> ScalarVisibilityOn();
-    planeMapper -> SetScalarModeToUsePointData();
-    planeMapper -> SetColorModeToMapScalars();
+    //planeMapper -> ScalarVisibilityOn();
+    //planeMapper -> SetScalarModeToUsePointData();
+    //planeMapper -> SetColorModeToMapScalars();
     //planeMapper->SetScalarModeToUseCellData();
+
+
+
+
+
+    double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
+    cout<<arr_range[0]<<" arr_range0"<<endl;
+    cout<<arr_range[1]<<" arr_range1"<<endl;
+    
+
+    //planeMapper->SetScalarRange(2,2);
+
+    vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+    //lut->SetNumberOfColors(planeMapper->GetLookupTable()->GetNumberOfAvailableColors());
+    //lut->IndexedLookupOff();
+    //lut->SetHueRange(0.6,0.6);
+    //lut->SetSaturationRange(0,0);
+    //lut->SetTableRange(0,arr_range[1]);
+    //lut->SetValueRange(0,1);
+    //lut->SetNanColor(0,0.2,0.3,0);
+    //lut->SetSaturationRange(1,0);
+    //lut->SetBelowRangeColor(0,0.2,0.4,1);
+    //lut->SetAboveRangeColor(0,3,0.2,1);
+    lut->SetNumberOfColors(256);
+    lut->SetTableRange(0,0.5);
+    lut->SetRange(0,4);
+    //lut->SetRange()
+    lut->Build();
+    double interval = 1;
+    double r = 256, g = 256, b = 256;
+    for(int i = 0; i< 253 ; i+=4){
+        lut->SetTableValue(i,r,g,b);
+        lut->SetTableValue(i+1,r-interval,g-interval,b-interval);
+        lut->SetTableValue(i+2,r-interval*2,g-interval*2,b-interval*2);
+        lut->SetTableValue(i+3,r-interval*3,g-interval*3,b-interval*3);
+        r -= interval * 4;
+        b -= interval * 4;
+        g -= interval * 4;
+    }
+    lut->SetTableValue(0,0,0,0,0);
+    //lut->SetBelowRangeColor(122,133,5,0);
+    
+
+    double* range = lut->GetRange();
+    cout<<range[0]<<" range0"<<endl;
+    cout<<range[1]<<" range1"<<endl;
+    
+
+
+
+
+     cout<<lut->GetNumberOfTableValues()<<" table Value"<<endl;
+
+    //planeMapper->GetLookupTable()->UsingLogScale();
+    //planeMapper->GetLookupTable()->SetVectorMode(0);
+    //planeMapper->GetLookupTable()->SetRange(0,0);
+    //planeMapper->GetLookupTable()->Build();
     
     cout<< "actor" <<endl;
     vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
-    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
+    scalarActor->SetLookupTable(lut);
+    scalarActor->SetLabelFormat("%6.4g");
+    scalarActor->SetNumberOfLabels(3);
 
+    //double* range = planeMapper->GetLookupTable()->GetRange();
+    //cout<<range[0]<<" range0"<<endl;
+    //cout<<range[1]<<" range1"<<endl;
+    planeMapper->SetLookupTable(lut);
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
     cout<< "vtkrender"<<endl;
@@ -130,11 +163,6 @@ int main(){
     renWin->AddRenderer(ren1);
     renWin->SetSize(300,150);
 
-    //vtkCamera *camera = ren1->GetActiveCamera();   //set the camera
-    //camera->Azimuth(0);
-    //camera->Elevation(0);
-    //camera->SetDistance(200);
-    //renWin -> Render();
     cout<< "window"<<endl;
     vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
     iren -> SetRenderWindow (renWin);

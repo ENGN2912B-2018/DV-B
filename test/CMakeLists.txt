@@ -27,3 +27,13 @@ target_link_libraries(watch_blade read_data ${VTK_LIBRARIES})
 
 add_executable(blades blades.cpp)
 target_link_libraries(blades read_data ${VTK_LIBRARIES})
+
+add_executable(clip clip.cpp)
+target_link_libraries(clip read_data ${VTK_LIBRARIES})
+
+add_executable(watch_all watch_all.cpp)
+target_link_libraries(watch_all read_data ${VTK_LIBRARIES})
+
+add_executable(q_watch q_watch.cpp)
+target_link_libraries(q_watch read_data ${VTK_LIBRARIES})
+

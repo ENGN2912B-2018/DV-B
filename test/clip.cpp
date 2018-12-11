@@ -29,6 +29,11 @@
 #include <vtkVertexGlyphFilter.h>
 #include <vtkScalarBarActor.h>
 #include <vtkCamera.h>
+#include <vtkPlane.h>
+#include <vtkCutter.h>
+#include <vtkDataSetMapper.h>
+#include <vtkClipPolyData.h>
+
 //#include "vtkScalarBarActor.h"
 #include <map>
 using namespace std;
@@ -44,9 +49,6 @@ int main(){
 
     //vtkDataSet *data_q = vtkDataSet :: New();
 
-    vtkAbstractArray *q_array = data->GetPointData()->GetArray(1);
-    
-
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     lut->SetNumberOfColors(64);
     lut->SetTableRange(-100,350);
@@ -61,7 +63,7 @@ int main(){
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
-    double r = 0, g = 0, b = 0; 
+    double r = 0, g = 0, b = 0;
     for(int i = 0; i< 61 ; i+=4){
         lut->SetTableValue(i,r,g,b);
         lut->SetTableValue(i+1,r+0.01,g+0.01,b+0.01);
@@ -71,50 +73,56 @@ int main(){
         b += 0.04;
         g += 0.04;
     }
-    //vtkCastToConcrete *cast = vtkCastToConcrete :: New();
-    
-    //vtkDataSetToDataObjectFilter *ds2do = vtkDataSetToDataObjectFilter::New();
-    //cout<< "ds2do" <<endl;
-    //ds2do->DebugOn();
-
-    //ds2do->SetInputConnection(data_pipe);
-    //vtkWarpVector *warp = vtkWarpVector::New();
-    //cout<< "warp" <<endl;
-    //warp->SetInputConnection(ds2do->GetOutputPort());
-    //warp->SetInputData(data);
-    //vtkConnectivityFilter *connect = vtkConnectivityFilter :: New();
-    //connect->DebugOn();
-    //cout<< "connect" <<endl;
-    //connect->SetInputConnection(warp->GetOutputPort());
-    //connect->SetExtractionModeToAllRegions();
-
-    //vtkPolyData *data_grid = vtkPolyData :: SafeDownCast(data);
-    //cout<<data_grid->GetNumberOfPolys()<<endl;
     vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
     cout<<"set_input"<<endl;
     vertexFilter->SetInputData(data);
     vertexFilter->Update();
     cout<<"input_over"<<endl;
-    
     vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
-    ploydata->ShallowCopy(vertexFilter->GetOutput());   
-
-    
-
+    ploydata->ShallowCopy(vertexFilter->GetOutput());
     ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0)); // set the scalar value for visualize
 
-    cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
+    vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
+    
+    double *center = data->GetCenter();
+    for(int i =0; i <3 ; i++){
+        cout<<center[i]<<" cen"<<endl;
+    }
+    
+    double *bound = data->GetBounds();
+    for(int i =0; i <5 ; i++){
+        cout<<center[i]<<" boun"<<endl;
+    }
+    double n1[] = {9,1,1};
+    double n2[] = {1,0,0};
+    plane -> SetOrigin(n1);
+    //plane -> SetNormal(n2);
+    //vtkSmartPointer<vtkClipPolyData> planecut = vtkSmartPointer<vtkClipPolyData>::New();
+    vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
+
+    //planecut->GetOutput()->GetPointData()->SetScalars(planecut->GetOutput()->GetPointData()->GetArray(0));
+
+    planecut -> SetInputData(data);
+    planecut -> SetCutFunction(plane);
+    planecut -> Update();
+
+    cout<<planecut->GetOutputPointsPrecision()<<" prec"<<endl;
+    cout<<planecut ->GetOutput()-> GetNumberOfCells()<<" number"<<endl;
+
+    //vtkSmartPointer<vtkWarpVector> warp = vtkSmartPointer<vtkWarpVector>::New();
+    //warp -> SetInputData(planecut->GetOutput());
+    //vtkSmartPointer<vtkDataSet> data_wd = vtkSmartPointer<vtkDataSet> :: NewInstance(warp->GetOutput());
+    
+
+    //cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
     vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //planeMapper->SetLookupTable(lut);
-    //planeMapper->DebugOn();
-    planeMapper->SetInputData(ploydata);
+    planeMapper->SetInputData(planecut->GetOutput());
     planeMapper -> ScalarVisibilityOn();
     planeMapper -> SetScalarModeToUsePointData();
     planeMapper -> SetColorModeToMapScalars();
-    //planeMapper->SetScalarModeToUseCellData();
-    
+
     cout<< "actor" <<endl;
-    vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
+    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
     scalarActor->SetLookupTable(planeMapper->GetLookupTable());
 
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
@@ -128,19 +136,28 @@ int main(){
     cout<<"vtkrender"<<endl;
     vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
     renWin->AddRenderer(ren1);
-    renWin->SetSize(300,150);
+    renWin->SetSize(900,900);
 
-    //vtkCamera *camera = ren1->GetActiveCamera();   //set the camera
-    //camera->Azimuth(0);
-    //camera->Elevation(0);
-    //camera->SetDistance(200);
-    //renWin -> Render();
+
     cout<< "window"<<endl;
     vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
     iren -> SetRenderWindow (renWin);
-    
-    //iren->AddObserver(vtkCommand::InteractionEvent,myCallback);
+   
+
     iren->Initialize();
     iren->Start();
     return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

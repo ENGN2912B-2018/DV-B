@@ -75,9 +75,8 @@ int main(){
         g += 0.04;
     }
     vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
-    scalarActor->SetLookupTable(lut);
+    //scalarActor->SetLookupTable(lut);
     
-
     cout<< "vtkrender"<<endl;
     vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
     ren1 -> SetBackground(0.1,0.2,0.4);
@@ -90,7 +89,7 @@ int main(){
     vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
     planeMapper->SetInputData(data);
     planeMapper -> ScalarVisibilityOn();
-    planeMapper-> SetLookupTable(lut);
+    //planeMapper-> SetLookupTable(lut);
 
     cout<< "actor" <<endl;
 
@@ -98,19 +97,21 @@ int main(){
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
 
+    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
     ren1 -> AddActor(planeActor);
     j++;
     }
-    
-
 
     ren1->AddActor2D(scalarActor);
-    
+
+    double range[2];
+    //array->GetRange(range);
+
+
     cout<<"vtkrenderWindow"<<endl;
     vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
     renWin->AddRenderer(ren1);
     renWin->SetSize(300,150);
-
 
     cout<< "window"<<endl;
     vtkSmartPointer<vtkRenderWindowInteractor> iren = vtkSmartPointer<vtkRenderWindowInteractor> :: New();
