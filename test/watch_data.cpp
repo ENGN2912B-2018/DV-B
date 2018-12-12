@@ -120,21 +120,20 @@ int main(){
     vtkDataArray *v = data->GetPointData()->GetArray("V");
     vtkDataArray *w = data->GetPointData()->GetArray("W");
     double tv[3];
-   // int origin = (int) data->GetCell(0)->GetPointId(0);
-    
-    pos = data->GetPoint(0);
-    tv[0] = u->GetTuple(0)[0];
-    tv[1] = v->GetTuple(0)[0];
-    tv[2] = w->GetTuple(0)[0];
+    int origin = (int) data->GetCell(0)->GetPointId(0);
+    cout<<origin<<" the initial location"<<endl;
+    pos = data->GetPoint(origin);
+    tv[0] = u->GetTuple(origin)[0];
+    tv[1] = v->GetTuple(origin)[0];
+    tv[2] = w->GetTuple(origin)[0];
     //cout<<"the initial velocity "<<tv[0]<<" "<<tv[1]<<" "<<tv[2]<<endl;
     //cout<<u->GetMaxId()<<endl; 
-    // cout<<"load u success "<<u->GetTuple(1000)[0]<<" "<<u->GetTuple(10000)[0]<<" "<<u->GetTuple(100000)[0]<<" "<<u->GetTuple(1000000)[0]<<endl;    
     cout<<"load vtu success"<<endl;
     
     vtkSmartPointer<vtkPoints> point_array = vtkSmartPointer<vtkPoints>::New();
-    point_array->SetNumberOfPoints(500000);
+    point_array->SetNumberOfPoints(52000);
     point_array->InsertNextPoint(pos);    
-
+    
     double interval = 0.001;
     double *next_p = new double[3];
     next_p[0] = pos[0]+tv[0]*interval;
@@ -143,44 +142,77 @@ int main(){
     cout<<next_p[0]<<" "<<next_p[1]<<" "<<next_p[2]<<" the vague position"<<endl;
     cout<<"get next position success"<<endl;
     double *pcoord = new double[3];
-    vtkIdType PointId = data->FindPoint(next_p);
+    //vtkIdType PointId = data->FindPoint(next_p);
+   
+    int subId;
+    double pcoords[3];
+    double weights[5];
+    vtkIdType CellId = data->FindCell(next_p,NULL,0,0.01,subId,pcoords,  weights);
+    cell = data->GetCell(CellId);
+    pcoord[0] = (cell->GetPoints()->GetData()->GetTuple(0)[0]+cell->GetPoints()->GetData()->GetTuple(1)[0]+cell->GetPoints()->GetData()->GetTuple(2)[0]+cell->GetPoints()->GetData()->GetTuple(4)[0])/4;
+    pcoord[1] = (cell->GetPoints()->GetData()->GetTuple(0)[1]+cell->GetPoints()->GetData()->GetTuple(1)[1]+cell->GetPoints()->GetData()->GetTuple(2)[1]+cell->GetPoints()->GetData()->GetTuple(4)[1])/4;
+    pcoord[2] = (cell->GetPoints()->GetData()->GetTuple(0)[2]+cell->GetPoints()->GetData()->GetTuple(1)[2]+cell->GetPoints()->GetData()->GetTuple(2)[2]+cell->GetPoints()->GetData()->GetTuple(4)[2])/4;
+
     cout<<"find and get cell success"<<endl;
-    pcoord = data->GetPoint(PointId);
+    //pcoord = data->GetPoint(PointId);
     
     point_array->InsertNextPoint(pcoord);
     vtkIdType count = 2;
-    while(count<=100){
+    while(count<=50000){
 
         pos = pcoord;
-        int index = (int)PointId;
-        tv[0] = u->GetTuple(index)[0];
-        tv[1] = v->GetTuple(index)[0];
-        tv[2] = w->GetTuple(index)[0];
+    //    int index = (int)PointId;
+        
+        tv[0] = (u->GetTuple(cell->GetPointId(0))[0]+u->GetTuple(cell->GetPointId(1))[0]+u->GetTuple(cell->GetPointId(2))[0]+u->GetTuple(cell->GetPointId(4))[0])/4;
+        tv[1] = (v->GetTuple(cell->GetPointId(0))[0]+v->GetTuple(cell->GetPointId(1))[0]+v->GetTuple(cell->GetPointId(2))[0]+v->GetTuple(cell->GetPointId(4))[0])/4;
+        tv[2] = (w->GetTuple(cell->GetPointId(0))[0]+w->GetTuple(cell->GetPointId(1))[0]+w->GetTuple(cell->GetPointId(2))[0]+w->GetTuple(cell->GetPointId(4))[0])/4;
+
     
         next_p[0] = pos[0]+tv[0]*interval;
         next_p[1] = pos[1]+tv[1]*interval;
         next_p[2] = pos[2]+tv[2]*interval;
     
-        PointId = data->FindPoint(next_p);
-        if(index==(int)PointId){
-            interval = interval*1.5;
-            continue;
-        }
-        if(PointId<0){
-            interval = interval*0.1;
-            continue;
-        }
-        pcoord = data->GetPoint(PointId);
-        point_array->InsertNextPoint(pcoord);
+   //     PointId = data->FindPoint(next_p);
+   //     if(index==(int)PointId){
+   //         interval = interval*1.5;
+   //         continue;
+   //     }
+   //     if(PointId<0){
+   //         interval = interval*0.1;
+   //         continue;
+   //     }
+   //     pcoord = data->GetPoint(PointId);
+   //     point_array->InsertNextPoint(pcoord);
+    
+    vtkIdType P_CellId = CellId;
+  
+    CellId = data->FindCell(next_p,NULL,0,0.01,subId,pcoords,  weights);
+
+   if(CellId==P_CellId){
+   	interval = interval*2;
+   	continue;
+   }
+   if(CellId<0){
+   	interval = interval*0.1;
+        continue;
+    }
+   
+    cell = data->GetCell(CellId);
+    pcoord[0] = (cell->GetPoints()->GetData()->GetTuple(0)[0]+cell->GetPoints()->GetData()->GetTuple(1)[0]+cell->GetPoints()->GetData()->GetTuple(2)[0]+cell->GetPoints()->GetData()->GetTuple(4)[0])/4;
+    pcoord[1] = (cell->GetPoints()->GetData()->GetTuple(0)[1]+cell->GetPoints()->GetData()->GetTuple(1)[1]+cell->GetPoints()->GetData()->GetTuple(2)[1]+cell->GetPoints()->GetData()->GetTuple(4)[1])/4;
+    pcoord[2] = (cell->GetPoints()->GetData()->GetTuple(0)[2]+cell->GetPoints()->GetData()->GetTuple(1)[2]+cell->GetPoints()->GetData()->GetTuple(2)[2]+cell->GetPoints()->GetData()->GetTuple(4)[2])/4;
+    
+   // pcoord = data->GetPoint(PointId);
+   point_array->InsertNextPoint(pcoord);
         count++;
         cout<<count<<endl;
-
+      interval=0.01;
     }
 
     vtkSmartPointer<vtkLineSource> line = vtkSmartPointer<vtkLineSource>::New();
     line->SetPoints(point_array);
     line->Update();
-    line->SetResolution(10);
+    line->SetResolution(100);
     line->Update();
 
     //cout<<NextCell->GetPoints()->GetData()->GetTuple(0)[0]<<endl;
@@ -193,15 +225,15 @@ int main(){
     LineMapper->SetInputConnection(line->GetOutputPort());
     vtkSmartPointer<vtkActor> LineActor = vtkSmartPointer<vtkActor>::New();
     LineActor->SetMapper(LineMapper);
-    LineActor->GetProperty()->SetLineWidth(8);    
+    LineActor->GetProperty()->SetLineWidth(6);    
 
 
 
  
-    data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
+    //data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
+    //data->GetPointData()->RemoveArray(1);
+    //data->GetPointData()->RemoveArray(1);
+    //data->GetPointData()->RemoveArray(1);
     cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;;
     double r = 0, g = 0, b = 0; 
     for(int i = 0; i< 61 ; i+=4){
