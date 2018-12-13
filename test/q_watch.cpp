@@ -29,6 +29,7 @@
 #include <vtkVertexGlyphFilter.h>
 #include <vtkScalarBarActor.h>
 #include <vtkCamera.h>
+#include <vtkTextProperty.h>
 //#include "vtkScalarBarActor.h"
 #include <map>
 using namespace std;
@@ -92,7 +93,7 @@ int main(){
     cout<<arr_range[1]<<" arr_range1"<<endl;
     
 
-    //planeMapper->SetScalarRange(2,2);
+    planeMapper->SetScalarRange(0,arr_range[1]);
 
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     //lut->SetNumberOfColors(planeMapper->GetLookupTable()->GetNumberOfAvailableColors());
@@ -106,8 +107,8 @@ int main(){
     //lut->SetBelowRangeColor(0,0.2,0.4,1);
     //lut->SetAboveRangeColor(0,3,0.2,1);
     lut->SetNumberOfColors(256);
-    lut->SetTableRange(0,0.5);
-    lut->SetRange(0,4);
+    lut->SetTableRange(0,50);
+    //lut->SetRange(0,100);
     //lut->SetRange()
     lut->Build();
     double interval = 1;
@@ -124,14 +125,9 @@ int main(){
     lut->SetTableValue(0,0,0,0,0);
     //lut->SetBelowRangeColor(122,133,5,0);
     
-
     double* range = lut->GetRange();
     cout<<range[0]<<" range0"<<endl;
     cout<<range[1]<<" range1"<<endl;
-    
-
-
-
 
      cout<<lut->GetNumberOfTableValues()<<" table Value"<<endl;
 
@@ -141,10 +137,33 @@ int main(){
     //planeMapper->GetLookupTable()->Build();
     
     cout<< "actor" <<endl;
-    vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
+    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+    scalarActor->SetMaximumNumberOfColors(256); 
     scalarActor->SetLookupTable(lut);
-    scalarActor->SetLabelFormat("%6.4g");
-    scalarActor->SetNumberOfLabels(3);
+    scalarActor->SetHeight(0.12); 
+    scalarActor->SetWidth(0.90); 
+    scalarActor->SetPosition(0.04, 0.02); 
+    scalarActor->SetPosition2(0.90, 0.20); 
+    scalarActor->SetOrientationToHorizontal(); 
+    scalarActor->SetNumberOfLabels(3); 
+    scalarActor->SetLabelFormat("%.4g"); 
+    scalarActor->VisibilityOn(); 
+    vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
+    labeltype->SetFontSize(15);
+    scalarActor->SetLabelTextProperty(labeltype);
+    
+    
+    
+    
+    
+    
+    //scalarActor->SetLabelFormat("%.4g");
+    //double* barrange = scalarActor->GetRange();
+    //cout<<barrange[0]<<" barrange1"<<endl;
+    //cout<<barrange[1]<<" barrange2"<<endl;
+
+
+    //scalarActor->SetNumberOfLabels(3);
 
     //double* range = planeMapper->GetLookupTable()->GetRange();
     //cout<<range[0]<<" range0"<<endl;

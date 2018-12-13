@@ -37,3 +37,6 @@ target_link_libraries(watch_all read_data ${VTK_LIBRARIES})
 add_executable(q_watch q_watch.cpp)
 target_link_libraries(q_watch read_data ${VTK_LIBRARIES})
 
+add_executable(get_points get_points.cpp)
+target_link_libraries(get_points read_data ${VTK_LIBRARIES})
+
