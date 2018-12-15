@@ -91,40 +91,16 @@ EventQtSlotConnect::EventQtSlotConnect()
   this->setupUi(this);
   //connect( this->ui.radioButton_P , SIGNAL( clicked() ), this, SLOT(pushButton_SetLabelText()));
 
-
-
   vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
   data->DeepCopy(this->air[0]);
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
   this->qvtkWidget->SetRenderWindow(renderWindow);
-  //cout << "renderwindow" << endl;
 
-  // vtkDataSet *data = input.get_data();
-
-  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-  lut->SetNumberOfColors(64);
-  lut->SetTableRange(-100,350);
-  lut->Build();
-
-  //cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
-  cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
   data->GetPointData()->RemoveArray(0);
   data->GetPointData()->RemoveArray(1);
   data->GetPointData()->RemoveArray(1);
   data->GetPointData()->RemoveArray(1);
-  cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
-
-  double r = 0, g = 0, b = 0;
-  for(int i = 0; i < 61 ; i += 4){
-    lut->SetTableValue(i,r,g,b);
-    lut->SetTableValue(i+1,r+0.01,g+0.01,b+0.01);
-    lut->SetTableValue(i+2,r+0.02,g+0.02,b+0.02);
-    lut->SetTableValue(i+3,r+0.03,g+0.03,b+0.03);
-    r += 0.04;
-    b += 0.04;
-    g += 0.04;
-  }
 
   vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
   //cout<<"set_input"<<endl;
@@ -135,24 +111,12 @@ EventQtSlotConnect::EventQtSlotConnect()
   vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
   ploydata->ShallowCopy(vertexFilter->GetOutput());
 
-  ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
 
-  //cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
   vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  //cout << "mapper" << endl;
-  //planeMapper->SetLookupTable(lut);
-  //planeMapper->DebugOn();
 
-  // CRASHED HERE.
   planeMapper -> SetInputData(ploydata);
 
-  planeMapper -> ScalarVisibilityOn();
-  planeMapper -> SetScalarModeToUsePointData();
-  planeMapper -> SetColorModeToMapScalars();
-
-  //cout << "actor" << endl;
   vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
-  scalarActor->SetLookupTable(planeMapper->GetLookupTable());
   vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
   planeActor ->SetMapper(planeMapper);
   cout << "vtkrender_initial"<< endl;
@@ -161,8 +125,6 @@ EventQtSlotConnect::EventQtSlotConnect()
   ren1 -> SetBackground(0.1,0.2,0.4);
   ren1 -> AddActor(planeActor);
   this->actors.push_back(planeActor);
-  ren1 -> AddActor2D(scalarActor);
-  this->actor2ds.push_back(scalarActor);
 
 
   // render
@@ -230,7 +192,7 @@ void EventQtSlotConnect::on_radioButton_P_toggled(bool checked)
     //cout<<arr_range[0]<<" arr_range0"<<endl;
     //cout<<arr_range[1]<<" arr_range1"<<endl;
 
-    planeMapper->SetScalarRange(0,arr_range[1]);  //set map range
+    planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
 
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
     lut->SetNumberOfColors(256);
@@ -257,16 +219,15 @@ void EventQtSlotConnect::on_radioButton_P_toggled(bool checked)
     vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
     scalarActor->SetMaximumNumberOfColors(256);
     scalarActor->SetLookupTable(lut);
-    scalarActor->SetHeight(0.12);
-    scalarActor->SetWidth(0.90);
+    scalarActor->SetHeight(0.5);
+    scalarActor->SetWidth(0.12);
     scalarActor->SetPosition(0.04, 0.02);
     scalarActor->SetPosition2(0.90, 0.20);
-    scalarActor->SetOrientationToHorizontal();
-    scalarActor->SetNumberOfLabels(3);
+    scalarActor->SetNumberOfLabels(5);
     scalarActor->SetLabelFormat("%.4g");
     scalarActor->VisibilityOn();
     vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
-    labeltype->SetFontSize(15);
+    labeltype->SetFontSize(5);
     scalarActor->SetLabelTextProperty(labeltype);
 
     planeMapper->SetLookupTable(lut);
@@ -350,29 +311,29 @@ void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
     data->GetPointData()->RemoveArray(1);
 
     vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-    lut->SetNumberOfColors(64);
-    lut->SetTableRange(-100,350);
+    lut->SetNumberOfColors(256);
+    //lut->SetTableRange(-100,350);
     lut->Build();
 
     double r = 0, g = 0, b = 0;
-    for(int i = 0; i< 61 ; i+=4){
+    for(int i = 0; i< 253 ; i+=4){
         lut->SetTableValue(i,r,g,b);
-        lut->SetTableValue(i+1,r+0.01,g+0.01,b+0.01);
-        lut->SetTableValue(i+2,r+0.02,g+0.02,b+0.02);
-        lut->SetTableValue(i+3,r+0.03,g+0.03,b+0.03);
-        r += 0.04;
-        b += 0.04;
-        g += 0.04;
+        lut->SetTableValue(i+1,r+1,g,b);
+        lut->SetTableValue(i+2,r+2,g,b);
+        lut->SetTableValue(i+3,r+3,g,b);
+        r += 4;
+        b += 4;
+        g += 4;
     }
 
-    vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+    //vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
     //cout<<"set_input"<<endl;
-    vertexFilter->SetInputData(data);
-    vertexFilter->Update();
+    //vertexFilter->SetInputData(data);
+    //vertexFilter->Update();
     //cout<<"input_over"<<endl;
-    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
-    ploydata->ShallowCopy(vertexFilter->GetOutput());
-    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
+   // vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
+   // ploydata->ShallowCopy(vertexFilter->GetOutput());
+    //ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
 
     vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
 
@@ -381,19 +342,37 @@ void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
     plane -> SetOrigin(n1);
     plane -> SetNormal(n2);
 
+
     vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
     planecut -> SetInputData(data);
     planecut -> SetCutFunction(plane);
     planecut -> Update();
 
+    double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
+
+    planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
     vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     planeMapper->SetInputData(planecut->GetOutput());
-
-    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
-    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
+    planeMapper->SetLookupTable(lut);
+    //vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+    //scalarActor->SetLookupTable(planeMapper->GetLookupTable());
 
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
+    
+    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+    scalarActor->SetMaximumNumberOfColors(256);
+    scalarActor->SetLookupTable(lut);
+    scalarActor->SetHeight(0.5);
+    scalarActor->SetWidth(0.12);
+    scalarActor->SetPosition(0.04, 0.02);
+    scalarActor->SetPosition2(0.90, 0.20);
+    scalarActor->SetNumberOfLabels(5);
+    scalarActor->SetLabelFormat("%.4g");
+    scalarActor->VisibilityOn();
+    vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
+    labeltype->SetFontSize(5);
+    scalarActor->SetLabelTextProperty(labeltype);
     
     cout << "vtkrenderer_Q" << endl;
 
@@ -427,4 +406,92 @@ void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
     this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
     //cout << "add renderer complete" << endl;
     }
+}
+
+void EventQtSlotConnect::on_radioButton_PO_toggled(bool checked)
+{
+    if(checked){
+        cout << "PO is on!" << endl;
+
+        for(int i = 0; i<actors.size(); i++){
+            this->ren1->RemoveActor(actors[i]);
+        }
+        for(int i = 0; i<actor2ds.size(); i++){
+            this->ren1->RemoveActor2D(actor2ds[i]);
+        }
+        actors.resize(0);
+        actor2ds.resize(0);
+        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+
+    this->setupUi(this);
+    //cout << "renderwindow1" << endl;
+
+    vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+    this->qvtkWidget->SetRenderWindow(renderWindow);
+
+    vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+    lut->SetNumberOfColors(256);
+    //lut->SetTableRange(-100,350);
+    lut->Build();
+
+    double r = 0, g = 0, b = 0;
+    for(int i = 0; i< 253 ; i+=4){
+        lut->SetTableValue(i,r,g,b);
+        lut->SetTableValue(i+1,r+1,g,b);
+        lut->SetTableValue(i+2,r+2,g,b);
+        lut->SetTableValue(i+3,r+3,g,b);
+        r += 4;
+        b += 4;
+        g += 4;
+    }
+    vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
+    //scalarActor->SetLookupTable(lut);
+
+    cout<< "vtkrender"<<endl;
+    vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
+    ren1 -> SetBackground(0.1,0.2,0.4);
+    for(int j =0; j < datasets.size();j++){
+    vtkSmartPointer<vtkDataSet> data = datasets[j];
+    vtkSmartPointer<vtkWarpVector> warp = vtkSmartPointer<vtkWarpVector>::New();
+    warp->SetInputData(data);
+
+    vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+    planeMapper->SetInputData(data);
+    planeMapper -> ScalarVisibilityOn();
+    planeMapper-> SetLookupTable(lut);
+    double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
+    planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
+
+    cout<< "actor" <<endl;
+
+
+    vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+    planeActor ->SetMapper(planeMapper);
+    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
+    this->ren1 -> AddActor(planeActor);
+    this->actors.push_back(planeActor);
+    }
+
+    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+    scalarActor->SetMaximumNumberOfColors(256);
+    scalarActor->SetLookupTable(lut);
+    scalarActor->SetHeight(0.5);
+    scalarActor->SetWidth(0.12);
+    scalarActor->SetPosition(0.04, 0.02);
+    scalarActor->SetPosition2(0.90, 0.20);
+    scalarActor->SetNumberOfLabels(5);
+    scalarActor->SetLabelFormat("%.4g");
+    scalarActor->VisibilityOn();
+    vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
+    labeltype->SetFontSize(5);
+    scalarActor->SetLabelTextProperty(labeltype);
+    
+    this->ren1->AddActor2D(scalarActor);   
+    this->actor2ds.push_back(scalarActor);
+    
+    cout << "vtk complete_PO" << endl;
+    this->qvtkWidget->GetRenderWindow()->AddRenderer(this->ren1);
+    
+
+}
 }
