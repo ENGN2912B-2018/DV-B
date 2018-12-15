@@ -27,7 +27,9 @@ private slots:
 private:
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
-  data_load input;
+  data_load air;
+  vector<data_load> objects;
+  vrkrender* ren1;
 
 };
 
