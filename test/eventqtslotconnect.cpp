@@ -160,6 +160,123 @@ EventQtSlotConnect::EventQtSlotConnect()
 
 void EventQtSlotConnect::on_radioButton_P_toggled(bool checked)
 {
+
+    if(checked){
+        cout << "Q is on!" << endl;
+
+        for(int i = 0; i<actors.size(); i++){
+            this->ren1->RemoveActor(actors[i]);
+        }
+        for(int i = 0; i<actor2ds.size(); i++){
+            this->ren1->RemoveActor2D(actor2ds[i]);
+        }
+        actors.resize(0);
+        actor2ds.resize(0);
+        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+
+        //this->setupUi(this);
+
+
+        vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+        this->qvtkWidget->SetRenderWindow(renderWindow);
+        //cout << "renderwindow2" << endl;
+
+        vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+        data->DeepCopy(this->air[0]);
+
+        data->GetPointData()->RemoveArray(1);
+        data->GetPointData()->RemoveArray(1);
+        data->GetPointData()->RemoveArray(1);
+        data->GetPointData()->RemoveArray(1);
+
+        vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+        lut->SetNumberOfColors(256);
+        //lut->SetTableRange(-100,350);
+        lut->Build();
+
+        double r = 0, g = 0, b = 0;
+        for(int i = 0; i< 253 ; i+=4){
+            lut->SetTableValue(i,r,g,b);
+            lut->SetTableValue(i+1,r+1,g,b);
+            lut->SetTableValue(i+2,r+2,g,b);
+            lut->SetTableValue(i+3,r+3,g,b);
+            r += 4;
+            b += 4;
+            g += 4;
+        }
+
+        vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
+
+        double n1[] = {9,1,1}; // coordinates, needs projection
+        double n2[] = {0,0,1}; // choose which surface to display (0,0,1) is x-y surface.
+        plane -> SetOrigin(n1);
+        plane -> SetNormal(n2);
+
+        vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
+        planecut -> SetInputData(data);
+        planecut -> SetCutFunction(plane);
+        planecut -> Update();
+
+        double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
+
+        vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        planeMapper->SetInputData(planecut->GetOutput());
+        planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
+
+        vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+        scalarActor->SetMaximumNumberOfColors(256);
+        scalarActor->SetLookupTable(lut);
+        scalarActor->SetHeight(0.5);
+        scalarActor->SetWidth(0.12);
+        scalarActor->SetPosition(0.04, 0.02);
+        scalarActor->SetPosition2(0.90, 0.20);
+        scalarActor->SetNumberOfLabels(5);
+        scalarActor->SetLabelFormat("%.4g");
+        scalarActor->VisibilityOn();
+        vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
+        labeltype->SetFontSize(5);
+        scalarActor->SetLabelTextProperty(labeltype);
+
+        vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+        planeActor ->SetMapper(planeMapper);
+
+        cout << "vtkrenderer_Q" << endl;
+
+        //    this->ren1 -> Clear();
+        this->ren1 -> SetBackground(0.1,0.2,0.4);
+        this->ren1 -> AddActor(planeActor);
+        this->actors.push_back(planeActor);
+        this->ren1 -> AddActor2D(scalarActor);
+        this->actor2ds.push_back(scalarActor);
+
+        //add_air_complete==================================================
+
+        //     vector<vtkDataSet*> obj_datasets(objects.size());
+        //     for (int j=0; j < objects.size();j++){
+        //        obj_datasets[j] = this->objects[j].get_data();
+
+        //     }
+        for (int j =0 ; j< objects.size(); j++){
+            //vtkDataSet* data = obj_datasets[j];
+
+            vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
+            planeMapper->SetInputData(objects[j]);
+
+            vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+            planeActor ->SetMapper(planeMapper);
+            this->ren1->AddActor(planeActor);
+            this->actors.push_back(planeActor);
+
+        }
+        cout << "vtk complete_Q" << endl;
+        this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+        //cout << "add renderer complete" << endl;
+    }
+
+}
+
+void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
+{
     if(checked){
         cout << "P is on!" << endl;
 
@@ -288,121 +405,6 @@ void EventQtSlotConnect::on_radioButton_P_toggled(bool checked)
         // render
         cout << "vtk complete_P" << endl;
         this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-    }
-}
-
-void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
-{
-    if(checked){
-        cout << "Q is on!" << endl;
-
-        for(int i = 0; i<actors.size(); i++){
-            this->ren1->RemoveActor(actors[i]);
-        }
-        for(int i = 0; i<actor2ds.size(); i++){
-            this->ren1->RemoveActor2D(actor2ds[i]);
-        }
-        actors.resize(0);
-        actor2ds.resize(0);
-        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
-
-        //this->setupUi(this);
-
-
-        vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
-        this->qvtkWidget->SetRenderWindow(renderWindow);
-        //cout << "renderwindow2" << endl;
-
-        vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
-        data->DeepCopy(this->air[0]);
-
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-
-        vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-        lut->SetNumberOfColors(256);
-        //lut->SetTableRange(-100,350);
-        lut->Build();
-
-        double r = 0, g = 0, b = 0;
-        for(int i = 0; i< 253 ; i+=4){
-            lut->SetTableValue(i,r,g,b);
-            lut->SetTableValue(i+1,r+1,g,b);
-            lut->SetTableValue(i+2,r+2,g,b);
-            lut->SetTableValue(i+3,r+3,g,b);
-            r += 4;
-            b += 4;
-            g += 4;
-        }
-
-        vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
-
-        double n1[] = {9,1,1};
-        double n2[] = {1,0,0};
-        plane -> SetOrigin(n1);
-        plane -> SetNormal(n2);
-
-        vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
-        planecut -> SetInputData(data);
-        planecut -> SetCutFunction(plane);
-        planecut -> Update();
-
-        double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
-
-        vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        planeMapper->SetInputData(planecut->GetOutput());
-        planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
-
-        vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
-        scalarActor->SetMaximumNumberOfColors(256);
-        scalarActor->SetLookupTable(lut);
-        scalarActor->SetHeight(0.5);
-        scalarActor->SetWidth(0.12);
-        scalarActor->SetPosition(0.04, 0.02);
-        scalarActor->SetPosition2(0.90, 0.20);
-        scalarActor->SetNumberOfLabels(5);
-        scalarActor->SetLabelFormat("%.4g");
-        scalarActor->VisibilityOn();
-        vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
-        labeltype->SetFontSize(5);
-        scalarActor->SetLabelTextProperty(labeltype);
-
-        vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
-        planeActor ->SetMapper(planeMapper);
-
-        cout << "vtkrenderer_Q" << endl;
-
-        //    this->ren1 -> Clear();
-        this->ren1 -> SetBackground(0.1,0.2,0.4);
-        this->ren1 -> AddActor(planeActor);
-        this->actors.push_back(planeActor);
-        this->ren1 -> AddActor2D(scalarActor);
-        this->actor2ds.push_back(scalarActor);
-
-        //add_air_complete==================================================
-
-        //     vector<vtkDataSet*> obj_datasets(objects.size());
-        //     for (int j=0; j < objects.size();j++){
-        //        obj_datasets[j] = this->objects[j].get_data();
-
-        //     }
-        for (int j =0 ; j< objects.size(); j++){
-            //vtkDataSet* data = obj_datasets[j];
-
-            vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-            planeMapper->SetInputData(objects[j]);
-
-            vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
-            planeActor ->SetMapper(planeMapper);
-            this->ren1->AddActor(planeActor);
-            this->actors.push_back(planeActor);
-
-        }
-        cout << "vtk complete_Q" << endl;
-        this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-        //cout << "add renderer complete" << endl;
     }
 }
 
