@@ -1,5 +1,5 @@
 #include "eventqtslotconnect.h"
-
+#include <vtkCutter.h>
 #include "vtkGenericOpenGLRenderWindow.h"
 #include <vtkNew.h>
 #include <vtkPolyDataMapper.h>
@@ -32,48 +32,73 @@
 #include <vtkCommand.h>
 #include <vtkVertexGlyphFilter.h>
 #include <vtkScalarBarActor.h>
+#include <vtkPlane.h>
+#include <vtkTextProperty.h>
 
 using namespace std;
 // Constructor
+
+void read_data(vector<string> paths, vector<vtkSmartPointer<vdata_load>> &data){
+    for (int i = 0; i<paths.size();i++){
+        data_load input;
+        if(!input.load_data(paths[i])){
+            cout<<"load data at: "<<paths[i]<<" successfully"<<endl;
+        }
+        vtkSmartPointer<vtkPolyData> inputData = vtkSmartPointer<vtkPolyData> :: New();
+        inputData->DeepCopy(input.get_data());
+        data.push_back(iputData);
+    }
+}
+
 EventQtSlotConnect::EventQtSlotConnect()
 {
-  string file_path = "../../data/air.vtu";
+  string air_path_str = "../../../../../../data/air.vtu";
   // data_load input;
   // sealed globally
-  if(!this->input.load_data(file_path)){
-    cout << "Loading succeeded." << endl;
-  }
   vector<string> paths;
-    paths.push_back("../../dataset/blade21.vtp");
-    paths.push_back("../../dataset/blade22.vtp");
-    paths.push_back("../../dataset/blade23.vtp");
-    paths.push_back("../../dataset/blade24.vtp");
-    paths.push_back("../../dataset/blade25.vtp");
-    paths.push_back("../../dataset/blade26.vtp");
+    paths_obj.push_back("../../../../../../data/blade21.vtp");
+    paths_obj.push_back("../../../../../../data/blade22.vtp");
+    paths_obj.push_back("../../../../../../data/blade23.vtp");
+    paths_obj.push_back("../../../../../../data/blade24.vtp");
+    paths_obj.push_back("../../../../../../data/blade25.vtp");
+    paths_obj.push_back("../../../../../../data/blade26.vtp");
 
-    paths.push_back("../../dataset/blade44.vtp");
-    paths.push_back("../../dataset/blade46.vtp");
-    paths.push_back("../../dataset/blade43.vtp");
-    paths.push_back("../../dataset/blade45.vtp");
-    
-  for(int i=0 ; i < paths.size(); i++){
-    string file_path = paths[i];
-    data_load input;
-    if(!input.load_data(file_path)){
-        cout<<"load success"<<endl;
+    paths_obj.push_back("../../../../../../data/blade44.vtp");
+    paths_obj.push_back("../../../../../../data/blade46.vtp");
+    paths_obj.push_back("../../../../../../data/blade43.vtp");
+    paths_obj.push_back("../../../../../../data/blade45.vtp");
+
+    thread t_air(read_data,paths_obj, ref(this->objects));
+    vector<string> air_path;
+    air_path.push_back(air_path_str);
+    read_data(air_path,this->air);
+
+    vector<vtkDataSet*> dataset_air;
+    for( int i =0; i< data_air.size(); i++){
+        cout<<"air_file: "<<i<<" "<<endl;
+        cout<< dataset_air[i]->GetPointData()->GetNumberOfArrays()<<endl;
     }
-    this->objects.push_back(input);
-  }
+
+    t_air.join();
+
+    for( int i =0; i< data_blade.size(); i++){
+        cout<<"object_file: "<<i<<" "<<endl;
+        cout<<dataset_blade[i]->GetPointData()->GetNumberOfArrays()<<endl;
+    }
 
   /**********************************/
     
   this->setupUi(this);
+  //connect( this->ui.radioButton_P , SIGNAL( clicked() ), this, SLOT(pushButton_SetLabelText()));
+
+
+
   vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
-  data->DeepCopy(input.get_data());
+  data->DeepCopy(this->air[0]);
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
   this->qvtkWidget->SetRenderWindow(renderWindow);
-  cout << "renderwindow" << endl;
+  //cout << "renderwindow" << endl;
 
   // vtkDataSet *data = input.get_data();
 
@@ -82,7 +107,7 @@ EventQtSlotConnect::EventQtSlotConnect()
   lut->SetTableRange(-100,350);
   lut->Build();
 
-  cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
+  //cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
   cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
   data->GetPointData()->RemoveArray(0);
   data->GetPointData()->RemoveArray(1);
@@ -102,19 +127,19 @@ EventQtSlotConnect::EventQtSlotConnect()
   }
 
   vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
-  cout<<"set_input"<<endl;
+  //cout<<"set_input"<<endl;
   vertexFilter->SetInputData(data);
   vertexFilter->Update();
-  cout<<"input_over"<<endl;
+  //cout<<"input_over"<<endl;
 
   vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
   ploydata->ShallowCopy(vertexFilter->GetOutput());
 
   ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
 
-  cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
+  //cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
   vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-  cout << "mapper" << endl;
+  //cout << "mapper" << endl;
   //planeMapper->SetLookupTable(lut);
   //planeMapper->DebugOn();
 
@@ -125,26 +150,24 @@ EventQtSlotConnect::EventQtSlotConnect()
   planeMapper -> SetScalarModeToUsePointData();
   planeMapper -> SetColorModeToMapScalars();
 
-  cout << "actor" << endl;
+  //cout << "actor" << endl;
   vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
   scalarActor->SetLookupTable(planeMapper->GetLookupTable());
   vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
   planeActor ->SetMapper(planeMapper);
-  cout << "vtkrender"<< endl;
-  vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
+  cout << "vtkrender_initial"<< endl;
+  vtkRenderer* ren1 = vtkRenderer :: New();
   this->ren1 = ren1;
   ren1 -> SetBackground(0.1,0.2,0.4);
   ren1 -> AddActor(planeActor);
+  this->actors.push_back(planeActor);
   ren1 -> AddActor2D(scalarActor);
+  this->actor2ds.push_back(scalarActor);
 
-  //cout << "vtkrender" << endl;
-  //vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
-  //renWin->AddRenderer(ren1);
-  //renWin->SetSize(300,150);
 
   // render
   this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-  cout << "add renderer complete" << endl;
+  cout << "add renderer complete_initial" << endl;
 
   /**************************************/
 
@@ -152,28 +175,37 @@ EventQtSlotConnect::EventQtSlotConnect()
   vtkNew<vtkEventQtSlotConnect> slotConnector;
   this->Connections = slotConnector;
 
-//  connect(checkBox_P,
-//    SIGNAL(stateChanged(int)), //
-//    this,
-//    SLOT(on_checkBox_P_clicked()));
+  //connect(radioButton_P,
+    //SIGNAL(stateChanged(int)), //
+   // this,
+    //SLOT(on_radioButton_P_clicked()));
 
 };
 
-void EventQtSlotConnect::on_checkBox_P_clicked()
+void EventQtSlotConnect::on_radioButton_P_toggled(bool checked)
 {
-    if(checkBox_P->isChecked()){
+    if(checked){
         cout << "P is on!" << endl;
-    }
+
+        for(int i = 0; i<actors.size(); i++){
+            this->ren1->RemoveActor(actors[i]);
+        }
+        for(int i = 0; i<actor2ds.size(); i++){
+            this->ren1->RemoveActor2D(actor2ds[i]);
+        }
+        actors.resize(0);
+        actor2ds.resize(0);
+        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
 
     this->setupUi(this);
-    cout << "renderwindow1" << endl;
+    //cout << "renderwindow1" << endl;
 
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
     this->qvtkWidget->SetRenderWindow(renderWindow);
-    cout << "renderwindow2" << endl;
+    //cout << "renderwindow2" << endl;
 
     vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
-    data->DeepCopy(input.get_data());
+    data->DeepCopy(this->air[0]);
 
     //============================================================================================
     data->GetPointData()->RemoveArray(0);  // delete the data that we do not want to visualize.
@@ -190,13 +222,13 @@ void EventQtSlotConnect::on_checkBox_P_clicked()
 
     ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0)); // set the scalar value for visualize
 
-    cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
+    //cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
     vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     planeMapper->SetInputData(ploydata);
 
     double* arr_range = data->GetPointData()->GetArray(0)->GetRange();
-    cout<<arr_range[0]<<" arr_range0"<<endl;
-    cout<<arr_range[1]<<" arr_range1"<<endl;
+    //cout<<arr_range[0]<<" arr_range0"<<endl;
+    //cout<<arr_range[1]<<" arr_range1"<<endl;
 
     planeMapper->SetScalarRange(0,arr_range[1]);  //set map range
 
@@ -218,10 +250,10 @@ void EventQtSlotConnect::on_checkBox_P_clicked()
     lut->SetTableValue(0,0,0,0,0);
 
     double* range = lut->GetRange();
-    cout<<range[0]<<" range0"<<endl;
-    cout<<range[1]<<" range1"<<endl;
+    //cout<<range[0]<<" range0"<<endl;
+    //cout<<range[1]<<" range1"<<endl;
 
-    cout<< "actor" <<endl;
+    //cout<< "actor" <<endl;
     vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
     scalarActor->SetMaximumNumberOfColors(256);
     scalarActor->SetLookupTable(lut);
@@ -241,60 +273,76 @@ void EventQtSlotConnect::on_checkBox_P_clicked()
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
 
-    cout << "actor" << endl;
-    vtkScalarBarActor *scalarActor = vtkScalarBarActor :: New();
-    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
-    vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
-    planeActor ->SetMapper(planeMapper);
-    cout << "vtkrender"<< endl;
+    //cout << "actor" << endl;
+    cout << "vtkrender_P"<< endl;
 
     //render=============================================
-    this -> render -> clear();
+//    ren1 -> Clear();
     ren1 -> SetBackground(0.1,0.2,0.4);
     ren1 -> AddActor(planeActor);
+    this->actors.push_back(planeActor);
     ren1 -> AddActor2D(scalarActor);
+    this->actor2ds.push_back(scalarActor);
+
 
     //add_air_complete==================================================
 
-     vector<vtkDataSet*> obj_datasets(objects.size());
-     for (int j=0; j < paths.size(),j++){
-        obj_datasets[j] = this->objects.get_data();
-        j++;
-     }
-     for (int j =0 ; j< obj_datasets.size(); j++){
-        vtkSmartPointer<vtkDataSet> data = datasets[j];
+//     vector<vtkDataSet*> obj_datasets(this->objects.size());
+//     cout << "size" << objects.size() << endl;
+//     for (int j=0; j < this->objects.size(); j++)
+//     {
+//        obj_datasets[j] = this->objects[j]();
+//        cout << obj_datasets[j]->GetPointData()->GetNumberOfArrays() << endl;
+//     }
+//     cout << "1st loop complete" << endl;
 
-        vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-        planeMapper->SetInputData(data);
+     for (int j =0 ; j< this->objects.size(); j++){
+        //vtkSmartPointer<vtkDataSet> data = obj_datasets[j];
+        cout << "dataset" << endl;
+        vtkSmartPointer<vtkDataSetMapper> planeMapper1 = vtkSmartPointer<vtkDataSetMapper>::New();
+        cout << "initialize mapper" << endl;
+        planeMapper1->SetInputData(objects[j]);
+        cout << "mapper" << endl;
+        vtkSmartPointer<vtkActor> planeActor1 = vtkSmartPointer<vtkActor> :: New();
+        planeActor1 ->SetMapper(planeMapper1);
+        this->ren1->AddActor(planeActor1);
+        this->actors.push_back(planeActor1);
 
-        vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
-        planeActor ->SetMapper(planeMapper);
-        this->ren1->AddActor(planeActor);
+        cout << "loop" << endl;
     }
 
-    
+
     // render
-    cout << "vtk complete" << endl;
-    //this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-    cout << "add renderer complete" << endl;
+    cout << "vtk complete_P" << endl;
+    this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+    //cout << "add renderer complete" << endl;
+    }
 }
 
-void EventQtSlotConnect::on_checkBox_Q_stateChanged()
+void EventQtSlotConnect::on_radioButton_Q_toggled(bool checked)
 {
-    if(checkBox_Q->isChecked()){
+    if(checked){
         cout << "Q is on!" << endl;
-    }
 
+        for(int i = 0; i<actors.size(); i++){
+            this->ren1->RemoveActor(actors[i]);
+        }
+        for(int i = 0; i<actor2ds.size(); i++){
+            this->ren1->RemoveActor2D(actor2ds[i]);
+        }
+        actors.resize(0);
+        actor2ds.resize(0);
+        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
     this->setupUi(this);
-    cout << "renderwindow1" << endl;
+    //cout << "renderwindow1" << endl;
 
 
     vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
     this->qvtkWidget->SetRenderWindow(renderWindow);
-    cout << "renderwindow2" << endl;
+    //cout << "renderwindow2" << endl;
     
-    avtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
-    data->DeepCopy(air_input.get_data());
+    vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    data->DeepCopy(this->air[0]);
 
     data->GetPointData()->RemoveArray(1);
     data->GetPointData()->RemoveArray(1);
@@ -318,13 +366,13 @@ void EventQtSlotConnect::on_checkBox_Q_stateChanged()
     }
 
     vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
-    cout<<"set_input"<<endl;
+    //cout<<"set_input"<<endl;
     vertexFilter->SetInputData(data);
     vertexFilter->Update();
-    cout<<"input_over"<<endl;
+    //cout<<"input_over"<<endl;
     vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
     ploydata->ShallowCopy(vertexFilter->GetOutput());
-    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));    
+    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0));
 
     vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
 
@@ -347,31 +395,36 @@ void EventQtSlotConnect::on_checkBox_Q_stateChanged()
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
     
-    this->ren1->Clear();
+    cout << "vtkrenderer_Q" << endl;
+
+//    this->ren1 -> Clear();
     this->ren1 -> SetBackground(0.1,0.2,0.4);
     this->ren1 -> AddActor(planeActor);
+    this->actors.push_back(planeActor);
     this->ren1 -> AddActor2D(scalarActor);
+    this->actor2ds.push_back(scalarActor);
     
     //add_air_complete==================================================
 
-     vector<vtkDataSet*> obj_datasets(objects.size());
-     for (int j=0; j < paths.size(),j++){
-        obj_datasets[j] = this->objects.get_data();
-        j++;
-     }
-     for (int j =0 ; j< obj_datasets.size(); j++){
-        vtkSmartPointer<vtkDataSet> data = datasets[j];
+//     vector<vtkDataSet*> obj_datasets(objects.size());
+//     for (int j=0; j < objects.size();j++){
+//        obj_datasets[j] = this->objects[j].get_data();
+
+//     }
+     for (int j =0 ; j< objects.size(); j++){
+        //vtkDataSet* data = obj_datasets[j];
 
         vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
-        planeMapper->SetInputData(data);
+        planeMapper->SetInputData(objects[j]);
 
         vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
         planeActor ->SetMapper(planeMapper);
         this->ren1->AddActor(planeActor);
+        this->actors.push_back(planeActor);
+
     }
-
-
-    cout << "vtk complete" << endl;
-    //this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-    cout << "add renderer complete" << endl;
+    cout << "vtk complete_Q" << endl;
+    this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+    //cout << "add renderer complete" << endl;
+    }
 }
