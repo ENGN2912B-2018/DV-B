@@ -17,18 +17,22 @@ public:
 
   EventQtSlotConnect();
 
-public slots:
-
-  void on_checkBox_P_clicked();
 
 private slots:
-  void on_checkBox_Q_stateChanged();
+  void on_radioButton_P_toggled(bool checked);
+
+
+  void on_radioButton_U_toggled(bool checked);
+
+
+
+  void on_radioButton_Q_toggled(bool checked);
 
 private:
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
   data_load input;
-
+  vtkSmartPointer<vtkRenderer> ren1;
 };
 
 #endif

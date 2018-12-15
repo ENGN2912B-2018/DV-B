@@ -47,37 +47,43 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QCheckBox" name="checkBox_P">
+       <widget class="QRadioButton" name="radioButton_P">
         <property name="text">
          <string>P</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_Q">
+       <widget class="QRadioButton" name="radioButton_Q">
         <property name="text">
          <string>Q</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_U">
+       <widget class="QRadioButton" name="radioButton_U">
         <property name="text">
          <string>U</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_V">
+       <widget class="QRadioButton" name="radioButton_V">
         <property name="text">
          <string>V</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_W">
+       <widget class="QRadioButton" name="radioButton_W">
         <property name="text">
          <string>W</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
