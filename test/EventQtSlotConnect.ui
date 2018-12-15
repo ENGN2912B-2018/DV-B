@@ -19,7 +19,7 @@
      <rect>
       <x>-1</x>
       <y>-11</y>
-      <width>721</width>
+      <width>651</width>
       <height>591</height>
      </rect>
     </property>
@@ -27,21 +27,21 @@
    <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>30</y>
-      <width>91</width>
-      <height>161</height>
+      <x>690</x>
+      <y>10</y>
+      <width>151</width>
+      <height>211</height>
      </rect>
     </property>
     <property name="title">
-     <string>Select Content</string>
+     <string>Select content to display</string>
     </property>
     <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>0</x>
        <y>20</y>
-       <width>87</width>
+       <width>143</width>
        <height>104</height>
       </rect>
      </property>
@@ -64,9 +64,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QRadioButton" name="radioButton_U">
+       <widget class="QRadioButton" name="radioButton_PO">
         <property name="text">
-         <string>U</string>
+         <string>Pressure on Object</string>
         </property>
        </widget>
       </item>
@@ -93,8 +93,8 @@
    <widget class="QSlider" name="horizontalSlider">
     <property name="geometry">
      <rect>
-      <x>730</x>
-      <y>220</y>
+      <x>690</x>
+      <y>240</y>
       <width>141</width>
       <height>22</height>
      </rect>
@@ -120,6 +120,7 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionOpen_file"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -132,6 +133,11 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionOpen_file">
+   <property name="text">
+    <string>Open file...</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

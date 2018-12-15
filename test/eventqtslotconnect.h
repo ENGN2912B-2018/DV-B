@@ -30,6 +30,11 @@ private slots:
 
   void on_radioButton_Q_toggled(bool checked);
 
+  void on_radioButton_PO_toggled(bool checked);
+
+  void on_horizontalSlider_valueChanged(int value);
+
+  void open();
 private:
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;

@@ -9,6 +9,7 @@ VTK_MODULE_INIT(vtkRenderingFreeType);
 
 int main(int argc, char** argv)
 {
+  QCoreApplication::setAttribute(Qt::AA_DontUseNativeMenuBar);
   // needed to ensure appropriate OpenGL context is created for VTK rendering.
   QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
 
