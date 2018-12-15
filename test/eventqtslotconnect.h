@@ -7,6 +7,10 @@
 #include <data_load.h>
 #include <vtkSmartPointer.h>
 #include <vtkObject.h>
+#include <vtkActor.h>
+#include <vtkActor2D.h>
+
+using namespace std;
 class vtkEventQtSlotConnect;
 
 class EventQtSlotConnect : public QMainWindow, private Ui::EventQtSlotConnect
@@ -16,23 +20,25 @@ class EventQtSlotConnect : public QMainWindow, private Ui::EventQtSlotConnect
 public:
 
   EventQtSlotConnect();
+  void read_data(vector<string> paths, vector<vtkSmartPointer<vtkDataSet>> &data);
 
 
 private slots:
+
+
   void on_radioButton_P_toggled(bool checked);
-
-
-  void on_radioButton_U_toggled(bool checked);
-
-
 
   void on_radioButton_Q_toggled(bool checked);
 
 private:
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
-  data_load input;
-  vtkSmartPointer<vtkRenderer> ren1;
+  vector<vtkSmartPointer<vtkDataSet>> air;
+  vector<vtkSmartPointer<vtkDataSet>> objects;
+  vtkRenderer* ren1;
+  vector<vtkSmartPointer<vtkActor>> actors;
+  vector<vtkSmartPointer<vtkActor2D>> actor2ds;
+
 };
 
 #endif
