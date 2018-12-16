@@ -20,6 +20,8 @@ class EventQtSlotConnect : public QMainWindow, private Ui::EventQtSlotConnect
 public:
 
   EventQtSlotConnect();
+  void read_data(vector<string> paths, vector<vtkSmartPointer<vtkDataSet>> &data);
+
 
 private slots:
 
@@ -28,6 +30,11 @@ private slots:
 
   void on_radioButton_Q_toggled(bool checked);
 
+  void on_radioButton_PO_toggled(bool checked);
+
+  void on_horizontalSlider_valueChanged(int value);
+
+  void open();
 private:
 
   vtkSmartPointer<vtkEventQtSlotConnect> Connections;
