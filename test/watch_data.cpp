@@ -34,6 +34,7 @@
 #include <vtkLineSource.h>
 #include <vtkProperty.h>
 #include <math.h>
+#include <vtkPolyLineSource.h>
 //#include "vtkScalarBarActor.h"
 #include <map>
 VTK_MODULE_INIT(vtkRenderingFreeType)
@@ -49,7 +50,26 @@ int main(){
    // data->DebugOn();
 
     //vtkDataSet *data_q = vtkDataSet :: New();
-
+    
+    double i = 0, y_min = INT_MAX;
+    vector<double> ids;
+    while(i < data->GetNumberOfPoints()){
+        double *posi;
+        posi = data->GetPoint(i); 
+        if(posi[1]==y_min){
+            ids.push_back(i);
+            cout<<"x: "<<posi[0]<<" y: "<< posi[1]<<" z: "<<posi[2]<<endl;
+        }
+        else if(posi[1] < y_min){
+            y_min = posi[1];
+            ids.resize(0);
+            ids.push_back(i);
+            cout<<"fresh min; clear"<<endl;
+            cout<<"x: "<<posi[0]<<" y: "<< posi[1]<<" z: "<<posi[2]<<endl;
+        }
+        i++;
+}
+    cout<<"get plane id done."<<endl;
     vtkAbstractArray *q_array = data->GetPointData()->GetArray(1);
     
 
@@ -62,7 +82,6 @@ int main(){
     vtkDataArray *dis_arr = data->GetFieldData()->GetArray(0);
     cout<<data->GetFieldData()->GetArray(0)->GetName()<<endl;
     
-    cout<<"cell contains ";
 //    double x[3];
 //    vtkCell* cell0;
 //    vtkIdType cellId=1;
@@ -121,10 +140,10 @@ int main(){
     double tv[3];
     int origin = (int) data->GetCell(220212)->GetPointId(0);
     cout<<origin<<" the initial location"<<endl;
-    pos = data->GetPoint(origin);
-    tv[0] = u->GetTuple(origin)[0];
-    tv[1] = v->GetTuple(origin)[0];
-    tv[2] = w->GetTuple(origin)[0];
+    pos = data->GetPoint(ids[99]);
+    tv[0] = u->GetTuple(ids[99])[0];
+    tv[1] = v->GetTuple(ids[99])[0];
+    tv[2] = w->GetTuple(ids[99])[0];
     //cout<<"the initial velocity "<<tv[0]<<" "<<tv[1]<<" "<<tv[2]<<endl;
     //cout<<u->GetMaxId()<<endl; 
     cout<<"load vtu success"<<endl;
@@ -155,14 +174,14 @@ int main(){
     cout<<next_p[0]<<" "<<next_p[1]<<" "<<next_p[2];
         
     cell = data->GetCell(CellId);
-    double* tup = cell->GetPoints()->GetData()->GetTuple(0);
-    cout<<tup[0]<<" "<<tup[1]<<" "<<tup[2]<<endl;
-    double* tup2 = cell->GetPoints()->GetData()->GetTuple(1);
-    cout<<tup2[0]<<" "<<tup2[1]<<" "<<tup2[2]<<endl;
-    double* tup3 = cell->GetPoints()->GetData()->GetTuple(2);
-    cout<<tup3[0]<<" "<<tup3[1]<<" "<<tup3[2]<<endl;
-    double* tup4 = cell->GetPoints()->GetData()->GetTuple(4);
-    cout<<tup4[0]<<" "<<tup4[1]<<" "<<tup4[2]<<endl;
+   // double* tup = cell->GetPoints()->GetData()->GetTuple(0);
+   // cout<<tup[0]<<" "<<tup[1]<<" "<<tup[2]<<endl;
+   // double* tup2 = cell->GetPoints()->GetData()->GetTuple(1);
+   // cout<<tup2[0]<<" "<<tup2[1]<<" "<<tup2[2]<<endl;
+   // double* tup3 = cell->GetPoints()->GetData()->GetTuple(2);
+   // cout<<tup3[0]<<" "<<tup3[1]<<" "<<tup3[2]<<endl;
+   // double* tup4 = cell->GetPoints()->GetData()->GetTuple(4);
+   // cout<<tup4[0]<<" "<<tup4[1]<<" "<<tup4[2]<<endl;
     cout<<"check ends"<<endl;
     //cout<<cell->GetPointId(0)<<" "<<cell->GetPointId(1)<<" "<<cell->GetPointId(2)<<" "<<cell->GetPointId(3)<<" "<<cell->GetPointId(4)<<" "<<cell->GetPointId(5)<<" "<<cell->GetPointId(6)<<" "<<cell->GetPointId(7)<<endl;
     //pcoord[0] = (cell->GetPoints()->GetData()->GetTuple(0)[0]+cell->GetPoints()->GetData()->GetTuple(1)[0]+cell->GetPoints()->GetData()->GetTuple(2)[0]+cell->GetPoints()->GetData()->GetTuple(4)[0])/4;
@@ -261,23 +280,16 @@ int main(){
     line->SetResolution((int)count-1);
     line->Update();
  
-    //vtkSmartPointer<vtkPloyLineSource> PolyLine= vtkSmartPointer<vtkPolyLineSource>::New();
-    //PolyLine->SetPoints();
-    //PolyLine->SetResolution();
-    //PolyLine->Updata();
-
-
+//    vtkSmartPointer<vtkPolyLineSource> PolyLine= vtkSmartPointer<vtkPolyLineSource>::New();
+//    PolyLine->SetNumberOfPoints(count);
+//    PolyLine->SetPoints(point_array);
+//    PolyLine->Update();
     
     vtkSmartPointer<vtkPolyDataMapper> LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     LineMapper->SetInputConnection(line->GetOutputPort());
     vtkSmartPointer<vtkActor> LineActor = vtkSmartPointer<vtkActor>::New();
     LineActor->SetMapper(LineMapper);
     LineActor->GetProperty()->SetLineWidth(5);
-
-        
-
-
-
  
     //data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
     //data->GetPointData()->RemoveArray(1);
