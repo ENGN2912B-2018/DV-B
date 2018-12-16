@@ -43,3 +43,6 @@ target_link_libraries(get_points read_data ${VTK_LIBRARIES})
 
 add_executable(test_mod test_mod.cpp)
 target_link_libraries(test_mod read_data ${VTK_LIBRARIES})
+
+add_executable(stream_line stream_line.cpp)
+target_link_libraries(stream_line read_data ${VTK_LIBRARIES})
