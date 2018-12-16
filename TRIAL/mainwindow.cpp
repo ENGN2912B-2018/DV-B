@@ -45,8 +45,8 @@ mainwindow::mainwindow()
 {
     this->setupUi(this);
     connect(this->actionOpen, &QAction::triggered, this, &mainwindow::open);
-    //QString file_name = QFileDialog::getOpenFileName(this, "Open file(s)", "~");
-    //QMessageBox::information(this, "..", file_name);
+    connect(this->actionAbout, &QAction::triggered, this, &mainwindow::openAbout);
+
 
     vector<string> paths_obj;
     vector<string> air_path;
@@ -165,30 +165,44 @@ void mainwindow::open()
 {
     //QString file_name = QFileDialog::getOpenFileName(this, "Open file(s)", "~");
     //QMessageBox::information(this, "..", file_name);
-    QDir directory_name = QFileDialog::getExistingDirectory(this,"Open a folder", "../../../../../");
-    directory_name.makeAbsolute();
-    QString qsdirPath = directory_name.absolutePath();
-    string dirPath = qsdirPath.toStdString().c_str();
-    /*****      load files starts here        *****/
-    QStringList airImage = directory_name.entryList(QStringList() << "*.vtu", QDir::Files);
     vector<string> air_path;
-    foreach(QString airPathName, airImage)
-    {
-        string filePath = airPathName.toStdString().c_str();
-        string temp_path = dirPath + '/' + filePath;
-        cout << temp_path << endl;
-        air_path.push_back(temp_path);
-    }
-    QStringList bladeImages = directory_name.entryList(QStringList() << "*.vtp", QDir::Files);
     vector<string> paths_obj;
-    foreach(QString file_name, bladeImages)
+    while(1)
     {
-        string filePath = file_name.toStdString().c_str();
-        cout << dirPath + '/' + filePath << endl;
-        string temp_path = dirPath + '/' + filePath;
-        paths_obj.push_back(temp_path);
-    }
+        QDir directory_name = QFileDialog::getExistingDirectory(this,"Open a folder", "../../../../../");
+        directory_name.makeAbsolute();
+        QString qsdirPath = directory_name.absolutePath();
+        string dirPath = qsdirPath.toStdString().c_str();
+        /*****      load files starts here        *****/
+        QStringList airImage = directory_name.entryList(QStringList() << "*.vtu", QDir::Files);
 
+        foreach(QString airPathName, airImage)
+        {
+            string filePath = airPathName.toStdString().c_str();
+            string temp_path = dirPath + '/' + filePath;
+            cout << temp_path << endl;
+            air_path.push_back(temp_path);
+        }
+        QStringList bladeImages = directory_name.entryList(QStringList() << "*.vtp", QDir::Files);
+
+        foreach(QString file_name, bladeImages)
+        {
+            string filePath = file_name.toStdString().c_str();
+            cout << dirPath + '/' + filePath << endl;
+            string temp_path = dirPath + '/' + filePath;
+            paths_obj.push_back(temp_path);
+        }
+        if(air_path.size() == 0 && paths_obj.size() == 0){
+            // it means there's nothing to read.
+            QMessageBox msgBox;
+            msgBox.setText("There's no appropriate files to read in. Please select another folder!");
+            msgBox.exec();
+            continue;
+        }
+        else{
+            break;
+        }
+    }
     void(mainwindow::*read_data_p)(vector<string>, vector<vtkSmartPointer<vtkDataSet>> &);
     read_data_p = &mainwindow::read_data;
     std::thread t_air(ref(read_data_p), this, paths_obj, ref(this->objects));
@@ -681,4 +695,12 @@ void mainwindow::on_horizontalSlider_valueChanged(int value)
         cout << "surface position changed." << endl;
         this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
     }
+}
+
+void mainwindow::openAbout()
+{
+    QMessageBox msgBox;
+    msgBox.setText("This program is made by Yuqi Chai, Yabo Yan and Zhiyu Wang, for ENGN 2912B of Brown University. "
+                   "\n\nAll rights reserved.");
+    msgBox.exec();
 }
