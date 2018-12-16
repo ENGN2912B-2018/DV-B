@@ -40,6 +40,10 @@
 #include <QMessageBox>
 using namespace std;
 // Constructor
+struct no_data : public std::exception {
+        const char * what () const throw () {
+                    return "the current dataset has no selected data";}
+};
 
 void EventQtSlotConnect::read_data(vector<string> paths, vector<vtkSmartPointer<vtkDataSet>> &data){
     for (int i = 0; i<paths.size();i++){
