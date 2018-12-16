@@ -35,6 +35,9 @@
 #include <vtkProperty.h>
 #include <math.h>
 #include <vtkPolyLineSource.h>
+#include <vtkLine.h>
+#include <vtkCellArray.h>
+#include <vtkPolyLine.h>
 //#include "vtkScalarBarActor.h"
 #include <map>
 VTK_MODULE_INIT(vtkRenderingFreeType)
@@ -174,19 +177,7 @@ int main(){
     cout<<next_p[0]<<" "<<next_p[1]<<" "<<next_p[2];
         
     cell = data->GetCell(CellId);
-   // double* tup = cell->GetPoints()->GetData()->GetTuple(0);
-   // cout<<tup[0]<<" "<<tup[1]<<" "<<tup[2]<<endl;
-   // double* tup2 = cell->GetPoints()->GetData()->GetTuple(1);
-   // cout<<tup2[0]<<" "<<tup2[1]<<" "<<tup2[2]<<endl;
-   // double* tup3 = cell->GetPoints()->GetData()->GetTuple(2);
-   // cout<<tup3[0]<<" "<<tup3[1]<<" "<<tup3[2]<<endl;
-   // double* tup4 = cell->GetPoints()->GetData()->GetTuple(4);
-   // cout<<tup4[0]<<" "<<tup4[1]<<" "<<tup4[2]<<endl;
     cout<<"check ends"<<endl;
-    //cout<<cell->GetPointId(0)<<" "<<cell->GetPointId(1)<<" "<<cell->GetPointId(2)<<" "<<cell->GetPointId(3)<<" "<<cell->GetPointId(4)<<" "<<cell->GetPointId(5)<<" "<<cell->GetPointId(6)<<" "<<cell->GetPointId(7)<<endl;
-    //pcoord[0] = (cell->GetPoints()->GetData()->GetTuple(0)[0]+cell->GetPoints()->GetData()->GetTuple(1)[0]+cell->GetPoints()->GetData()->GetTuple(2)[0]+cell->GetPoints()->GetData()->GetTuple(4)[0])/4;
-    //pcoord[1] = (cell->GetPoints()->GetData()->GetTuple(0)[1]+cell->GetPoints()->GetData()->GetTuple(1)[1]+cell->GetPoints()->GetData()->GetTuple(2)[1]+cell->GetPoints()->GetData()->GetTuple(4)[1])/4;
-    //pcoord[2] = (cell->GetPoints()->GetData()->GetTuple(0)[2]+cell->GetPoints()->GetData()->GetTuple(1)[2]+cell->GetPoints()->GetData()->GetTuple(2)[2]+cell->GetPoints()->GetData()->GetTuple(4)[2])/4;
     pcoord = next_p;
     cout<<"find and get cell success"<<endl;
     //pcoord = data->GetPoint(PointId);
@@ -197,7 +188,6 @@ int main(){
     vtkIdType count = 2;
     double bound[6];
     data->GetBounds(bound);
-    cout<<"bound is "<<bound[0]<<" "<<bound[1]<<" "<<bound[2]<<" "<<bound[3]<<" "<<bound[4]<<" "<<bound[5]<<endl;
     cout<<"point2 "<<pcoord[0]<<" "<<pcoord[1]<<" "<<pcoord[2]<<endl;
     while(count<=5000){
 
@@ -221,17 +211,18 @@ int main(){
         r3 = (1/d3)/(1/d1+1/d2+1/d3+1/d4);
         r4 = (1/d4)/(1/d1+1/d2+1/d3+1/d4);
         
-        cout<<"caluculation ends"<<count<<endl;
+        //cout<<"caluculation ends"<<count<<endl;
         
-        tv[0] = u->GetTuple(cell->GetPointId(0))[0]*r1+u->GetTuple(cell->GetPointId(1))[0]*r2+u->GetTuple(cell->GetPointId(2))[0]*r3+u->GetTuple(cell->GetPointId(4))[0]*r4;
-        tv[1] = v->GetTuple(cell->GetPointId(0))[0]*r1+v->GetTuple(cell->GetPointId(1))[0]*r2+v->GetTuple(cell->GetPointId(2))[0]*r3+v->GetTuple(cell->GetPointId(4))[0]*r4;
-        tv[2] = w->GetTuple(cell->GetPointId(0))[0]*r1+w->GetTuple(cell->GetPointId(1))[0]*r2+w->GetTuple(cell->GetPointId(2))[0]*r3+w->GetTuple(cell->GetPointId(4))[0]*r4;
+    //    tv[0] = u->GetTuple(cell->GetPointId(0))[0]*r1+u->GetTuple(cell->GetPointId(1))[0]*r2+u->GetTuple(cell->GetPointId(2))[0]*r3+u->GetTuple(cell->GetPointId(4))[0]*r4;
+    //    tv[1] = v->GetTuple(cell->GetPointId(0))[0]*r1+v->GetTuple(cell->GetPointId(1))[0]*r2+v->GetTuple(cell->GetPointId(2))[0]*r3+v->GetTuple(cell->GetPointId(4))[0]*r4;
+    //    tv[2] = w->GetTuple(cell->GetPointId(0))[0]*r1+w->GetTuple(cell->GetPointId(1))[0]*r2+w->GetTuple(cell->GetPointId(2))[0]*r3+w->GetTuple(cell->GetPointId(4))[0]*r4;
  
         
         next_p[0] = pos[0]+tv[0]*interval;
         next_p[1] = pos[1]+tv[1]*interval;
         next_p[2] = pos[2]+tv[2]*interval;
-        cout<<"np "<<next_p[0]<<" "<<next_p[1]<<" "<<next_p[2]<<endl;
+        if(count<50){
+        cout<<"np "<<next_p[0]<<" "<<next_p[1]<<" "<<next_p[2]<<endl;}
    //     PointId = data->FindPoint(next_p);
    //     if(index==(int)PointId){
    //         interval = interval*1.5;
@@ -245,7 +236,7 @@ int main(){
    //     point_array->InsertNextPoint(pcoord);
     
     vtkIdType P_CellId = CellId;
-    cout<<"cell id is "<<CellId<<endl;
+    //cout<<"cell id is "<<CellId<<endl;
   
     CellId = data->FindCell(next_p,NULL,0,0.1,subId,pcoords,weights);
   
@@ -270,23 +261,46 @@ int main(){
     pcoord = next_p;
     point_array->InsertNextPoint(pcoord);
     count++;
-    cout<<count<<endl;
+    //cout<<count<<endl;
     interval=0.01;
     }
 
-    vtkSmartPointer<vtkLineSource> line = vtkSmartPointer<vtkLineSource>::New();
-    line->SetPoints(point_array);
-    line->Update();
-    line->SetResolution((int)count-1);
-    line->Update();
- 
-//    vtkSmartPointer<vtkPolyLineSource> PolyLine= vtkSmartPointer<vtkPolyLineSource>::New();
+    //vtkSmartPointer<vtkLineSource> line = vtkSmartPointer<vtkLineSource>::New();
+    //line->SetPoints(point_array);
+    //line->Update();
+    //line->SetResolution((int)count-1);
+    //line->Update();
+
+    vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
+
+    //for(unsigned int i = 0; i < (int)count-2; i++)
+    //{
+    //vtkSmartPointer<vtkLine> line =
+    //  vtkSmartPointer<vtkLine>::New();
+    //line->GetPointIds()->SetId(0,i);
+    //line->GetPointIds()->SetId(1,i+1);
+    //lines->InsertNextCell(line);
+    //} 
+
+    vtkSmartPointer<vtkPolyLine> PolyLine= vtkSmartPointer<vtkPolyLine>::New();
+    PolyLine->GetPointIds()->SetNumberOfIds(count);
+    for( int i = 0; i <(int)count ; i++)
+    {
+      PolyLine->GetPointIds()->SetId(i,i);
+    }
+    vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
+    cells->InsertNextCell(PolyLine);
+    vtkSmartPointer<vtkPolyData> linesPolyData =vtkSmartPointer<vtkPolyData>::New();
+    linesPolyData->SetPoints(point_array);
+    linesPolyData->SetLines(cells);
+
 //    PolyLine->SetNumberOfPoints(count);
 //    PolyLine->SetPoints(point_array);
 //    PolyLine->Update();
     
     vtkSmartPointer<vtkPolyDataMapper> LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    LineMapper->SetInputConnection(line->GetOutputPort());
+    //LineMapper->SetInputConnection(line->GetOutputPort());
+    LineMapper->SetInputData(linesPolyData);
     vtkSmartPointer<vtkActor> LineActor = vtkSmartPointer<vtkActor>::New();
     LineActor->SetMapper(LineMapper);
     LineActor->GetProperty()->SetLineWidth(5);
