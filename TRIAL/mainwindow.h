@@ -10,7 +10,7 @@
 #include <vtkObject.h>
 #include <vtkActor.h>
 #include <vtkActor2D.h>
-
+#include <vtkTextActor.h>
 using namespace std;
 class mainwindow;
 
@@ -34,6 +34,10 @@ private slots:
 
     void on_horizontalSlider_valueChanged(int value);
 
+    void openAbout();
+
+    void on_checkBox_clicked(bool checked);
+
 private:
     //Ui::mainwindow *ui;
     vector<vtkSmartPointer<vtkDataSet>> air;
@@ -41,6 +45,8 @@ private:
     vtkRenderer* ren1;
     vector<vtkSmartPointer<vtkActor>> actors;
     vector<vtkSmartPointer<vtkActor2D>> actor2ds;
+    vector<vtkSmartPointer<vtkTextActor>> textactors;
+    void deleteActors();
 };
 
 #endif // MAINWINDOW_H

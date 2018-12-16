@@ -29,7 +29,7 @@
      <rect>
       <x>1060</x>
       <y>70</y>
-      <width>197</width>
+      <width>206</width>
       <height>400</height>
      </rect>
     </property>
@@ -75,6 +75,13 @@
          <widget class="QRadioButton" name="radioButton_PO">
           <property name="text">
            <string>PO</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="checkBox">
+          <property name="text">
+           <string>Streamline for vector field</string>
           </property>
          </widget>
         </item>
@@ -126,12 +133,24 @@
     </property>
     <addaction name="actionOpen"/>
    </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <addaction name="actionAbout"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionOpen">
    <property name="text">
     <string>Open...</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About...</string>
    </property>
   </action>
  </widget>
