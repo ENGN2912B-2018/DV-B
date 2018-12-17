@@ -8,10 +8,14 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 message(STATUS "Running on CCV")
 
+
 find_package(VTK REQUIRED)
 
 include(${VTK_USE_FILE})
 
-include_directories(preprocess)
-add_subdirectory(preprocess)
+add_executable(ConvertFile_vtp ConvertFile_vtp.cxx)
+target_link_libraries(ConvertFile_vtp ${VTK_LIBRARIES})
+
+add_executable(ConvertFile_vtu ConvertFile_vtu.cxx)
+target_link_libraries(ConvertFile_vtu ${VTK_LIBRARIES})
 
