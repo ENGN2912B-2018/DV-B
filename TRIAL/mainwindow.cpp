@@ -37,6 +37,12 @@
 #include <vtkPlane.h>
 #include <vtkTextProperty.h>
 #include <vtkTextActor.h>
+#include <vtkDataArray.h>
+#include <vtkPoints.h>
+#include <unordered_map>
+#include <vtkPolyLine.h>
+#include <vtkProperty.h>
+#include <vtkDoubleArray.h>
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -66,16 +72,22 @@ mainwindow::mainwindow()
     this->setupUi(this);
     connect(this->actionOpen, &QAction::triggered, this, &mainwindow::open);
     connect(this->actionAbout, &QAction::triggered, this, &mainwindow::openAbout);
+    bool flag = 1;
+    streamActor = vtkSmartPointer<vtkActor>::New();
 
 
     vector<string> paths_obj;
     vector<string> air_path;
-    while(1)
+    vector<string> line_path;
+    while(flag)
     {
+
         QDir directory_name = QFileDialog::getExistingDirectory(this,"Open a folder", "../../../../../");
         directory_name.makeAbsolute();
         QString qsdirPath = directory_name.absolutePath();
         string dirPath = qsdirPath.toStdString().c_str();
+
+
         /*****      load files starts here        *****/
         QStringList airImage = directory_name.entryList(QStringList() << "*.vtu", QDir::Files);
         foreach(QString airPathName, airImage)
@@ -93,77 +105,166 @@ mainwindow::mainwindow()
             string temp_path = dirPath + '/' + filePath;
             paths_obj.push_back(temp_path);
         }
-        // if the dir is empty:
-        if(air_path.size() == 0 && paths_obj.size() == 0){
-            // it means there's nothing to read.
+        QStringList streamlineImages = directory_name.entryList(QStringList() << "*.vtk", QDir::Files);
+        foreach(QString file_name, streamlineImages)
+        {
+            string filePath = file_name.toStdString().c_str();
+            cout << dirPath + '/' + filePath << endl;
+            string temp_path = dirPath + '/' + filePath;
+            line_path.push_back(temp_path);
+        }
+
+        //        QStringList stringList = QFileDialog::getOpenFileNames(this, "Selete file(s) to open",
+        //                                                               "../../../../..", "VTK files (*.vtu *.vtp *.vtk)");
+        //        QStringList airImage = (static_cast<void>(QStringList() << "*.vtu"), stringList);
+
+        //        foreach(QString airPathName, airImage)
+        //        {
+        //            string filePath = airPathName.toStdString().c_str();
+        //            cout << filePath << endl;
+        //            air_path.push_back(filePath);
+        //        }
+        //        QStringList bladeImages = (static_cast<void>(QStringList() << "*.vtp"), stringList);
+        //        foreach(QString file_name, bladeImages)
+        //        {
+        //            string filePath = file_name.toStdString().c_str();
+        //            cout << filePath << endl;
+        //            paths_obj.push_back(filePath);
+        //        }
+        //        QStringList streamlineImages = (static_cast<void>(QStringList() << "*.vtk"), stringList);
+        //        foreach(QString file_name, streamlineImages)
+        //        {
+        //            string filePath = file_name.toStdString().c_str();
+        //            cout << filePath << endl;
+        //            line_path.push_back(filePath);
+        //        }
+
+        //cout << dirPath << endl;
+
+
+        if(directory_name == QDir::currentPath())
+        {
+            cout << "no file" << endl;
+            //QApplication::exit();
+            flag = 0;
+        }
+        else if(air_path.size() == 0)
+        {
             QMessageBox msgBox;
-            msgBox.setText("There's no appropriate files to read in. Please select another folder!");
+            msgBox.setText("There's no appropriate .vtu files to read in. Please select another folder!");
             msgBox.exec();
             continue;
         }
+        //        else if(air_path.size() == 0 && paths_obj.size() == 0){
+        //            // it means there's nothing to read.
+        //            QMessageBox msgBox;
+        //            msgBox.setText("There's no appropriate files to read in. Please select another folder!");
+        //            msgBox.exec();
+        //            continue;
+        //        }
+
         else{
             break;
         }
     }
-    void(mainwindow::*read_data_p)(vector<string>, vector<vtkSmartPointer<vtkDataSet>> &);
-    read_data_p = &mainwindow::read_data;
-    std::thread t_air(ref(read_data_p), this, paths_obj, ref(this->objects));
-    read_data(air_path, this->air);
 
-    for(int i = 0; i < air.size(); i++){
-        cout<<"air_file: "<<i<<" "<<endl;
-        cout<< air[i]->GetPointData()->GetNumberOfArrays()<<endl;
+    if(flag == 0)
+    {
+
     }
-    t_air.join();
 
-    for( int i =0; i< objects.size(); i++){
-        cout << "object_file: " << i << " " << endl;
-        cout << objects[i]->GetPointData()->GetNumberOfArrays() << endl;
+
+    //==========================================================//
+    else{
+        void(mainwindow::*read_data_p)(vector<string>, vector<vtkSmartPointer<vtkDataSet>> &);
+        read_data_p = &mainwindow::read_data;
+        std::thread t_air(ref(read_data_p), this, paths_obj, ref(this->objects));
+        read_data(air_path, this->air);
+
+        for(int i = 0; i < air.size(); i++){
+            cout<<"air_file: "<<i<<" "<<endl;
+            cout<< air[i]->GetPointData()->GetNumberOfArrays()<<endl;
+        }
+        t_air.join();
+
+        for(int i =0; i < objects.size(); i++){
+            cout << "object_file: " << i << " " << endl;
+            cout << objects[i]->GetPointData()->GetNumberOfArrays() << endl;
+        }
+
+        read_data(line_path, this->lines);
+
+        for(int i = 0; i < lines.size(); i++){
+            cout << "streamline file: " << i << " " << endl;
+        }
+
+        vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+        data->DeepCopy(this->air[0]);
+
+        //preprocess==============================
+
+        if(data->GetPointData()->GetArray("U") != nullptr && data->GetPointData()->GetArray("V") != nullptr &&data->GetPointData()->GetArray("W") != nullptr  )
+        {
+            vtkDataArray *u = data->GetPointData()->GetArray("U");
+            vtkDataArray *v = data->GetPointData()->GetArray("V");
+            vtkDataArray *w = data->GetPointData()->GetArray("W");
+
+            this->vlo_array = vtkSmartPointer<vtkDoubleArray>::New();
+            //velo->NewInstance();
+            cout<<"check begin"<<endl;
+            this->vlo_array->SetNumberOfComponents(1);
+            cout<<"check 1"<<endl;
+            this->vlo_array->SetNumberOfTuples(data->GetNumberOfPoints());
+            cout<<" set complete "<<endl;
+            double component;
+            for(vtkIdType i = 0; i <= data->GetNumberOfPoints(); i++){
+                component = sqrt(pow(u->GetTuple(i)[0],2)+pow(v->GetTuple(i)[0],2)+pow(w->GetTuple(i)[0],2));
+                this->vlo_array->SetTuple1(i,component);
+            }
+        }
+
+
+
+
+
+
+
+        //process_end=============================================
+        vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
+        this->qvtkWidget->SetRenderWindow(renderWindow);
+        //cout << "renderwindow" << endl;
+
+
+
+        vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+        //cout<<"set_input"<<endl;
+        vertexFilter->SetInputData(data);
+        vertexFilter->Update();
+        //cout<<"input_over"<<endl;
+
+        vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
+        ploydata->ShallowCopy(vertexFilter->GetOutput());
+
+
+        vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+
+        planeMapper -> SetInputData(ploydata);
+
+        //cout << "actor" << endl;
+        vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+        planeActor ->SetMapper(planeMapper);
+        cout << "vtkrender_initial"<< endl;
+        vtkRenderer* ren1 = vtkRenderer :: New();
+        this->ren1 = ren1;
+        ren1 -> SetBackground(0.1,0.2,0.4);
+        ren1 -> AddActor(planeActor);
+        this->actors.push_back(planeActor);
+
+
+        // render
+        this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+        cout << "add renderer complete_initial" << endl;
     }
-    vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
-
-    data->DeepCopy(this->air[0]);
-    vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
-    this->qvtkWidget->SetRenderWindow(renderWindow);
-    //cout << "renderwindow" << endl;
-
-
-    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
-    data->GetPointData()->RemoveArray(0);
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
-    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
-
-
-    vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
-    //cout<<"set_input"<<endl;
-    vertexFilter->SetInputData(data);
-    vertexFilter->Update();
-    //cout<<"input_over"<<endl;
-
-    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New();
-    ploydata->ShallowCopy(vertexFilter->GetOutput());
-
-
-    vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-
-    planeMapper -> SetInputData(ploydata);
-
-    //cout << "actor" << endl;
-    vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
-    planeActor ->SetMapper(planeMapper);
-    cout << "vtkrender_initial"<< endl;
-    vtkRenderer* ren1 = vtkRenderer :: New();
-    this->ren1 = ren1;
-    ren1 -> SetBackground(0.1,0.2,0.4);
-    ren1 -> AddActor(planeActor);
-    this->actors.push_back(planeActor);
-
-
-    // render
-    this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-    cout << "add renderer complete_initial" << endl;
 }
 
 void mainwindow::read_data(vector<string> paths, vector<vtkSmartPointer<vtkDataSet>> &data){
@@ -182,14 +283,17 @@ void mainwindow::read_data(vector<string> paths, vector<vtkSmartPointer<vtkDataS
 
 void mainwindow::open()
 {
-    //QString file_name = QFileDialog::getOpenFileName(this, "Open file(s)", "~");
-    //QMessageBox::information(this, "..", file_name);
     deleteActors();
-    air.resize(0);
-    objects.resize(0);
-    this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+    if(air.size() != 0){
+        air.resize(0);
+        objects.resize(0);
+        lines.resize(0);
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+
+    }
     vector<string> air_path;
     vector<string> paths_obj;
+    vector<string> line_path;
     while(1)
     {
         QDir directory_name = QFileDialog::getExistingDirectory(this,"Open a folder", "../../../../../");
@@ -215,6 +319,15 @@ void mainwindow::open()
             string temp_path = dirPath + '/' + filePath;
             paths_obj.push_back(temp_path);
         }
+        QStringList streamlineImages = directory_name.entryList(QStringList() << "*.vtk", QDir::Files);
+
+        foreach(QString file_name, streamlineImages)
+        {
+            string filePath = file_name.toStdString().c_str();
+            cout << dirPath + '/' + filePath << endl;
+            string temp_path = dirPath + '/' + filePath;
+            line_path.push_back(temp_path);
+        }
         if(air_path.size() == 0 && paths_obj.size() == 0){
             // it means there's nothing to read.
             QMessageBox msgBox;
@@ -237,10 +350,16 @@ void mainwindow::open()
     }
     t_air.join();
 
-    for( int i =0; i< objects.size(); i++){
+    for(int i = 0; i < objects.size(); i++){
         cout << "object_file: " << i << " " << endl;
         cout << objects[i]->GetPointData()->GetNumberOfArrays() << endl;
     }
+    read_data(line_path, this->lines);
+
+    for(int i = 0; i < lines.size(); i++){
+        cout << "streamline file: " << i << " " << endl;
+    }
+
     vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
 
     data->DeepCopy(this->air[0]);
@@ -249,12 +368,12 @@ void mainwindow::open()
     //cout << "renderwindow" << endl;
 
 
-    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
-    data->GetPointData()->RemoveArray(0);
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
-    data->GetPointData()->RemoveArray(1);
-    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
+    //    cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
+    //   data->GetPointData()->RemoveArray(0);
+    //   data->GetPointData()->RemoveArray(1);
+    //   data->GetPointData()->RemoveArray(1);
+    //   data->GetPointData()->RemoveArray(1);
+    //   cout<<"number of array"<<data->GetPointData()->GetNumberOfArrays()<<endl;
 
 
     vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
@@ -294,7 +413,8 @@ void mainwindow::on_radioButton_P_toggled(bool checked)
         cout << "P is on!" << endl;
 
         deleteActors();
-        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        //
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
 
         //this->setupUi(this);
 
@@ -304,34 +424,22 @@ void mainwindow::on_radioButton_P_toggled(bool checked)
 
         vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
         data->DeepCopy(this->air[0]);
-
+        vtkSmartPointer<vtkDataArray> data_array;
+        data_array = data->GetPointData()->GetArray("P");
+        if(data_array == nullptr){
+            data_array = data->GetPointData()->GetArray("p");
+        }
         try{
-            if(data->GetPointData()->GetAbstractArray("P") == nullptr){
+            if(data_array == nullptr){
                 throw no_data();
             }
         }
-
-
         catch (const no_data &e){
             cerr<<e.what()<<endl;
-
-            vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor> :: New();
-            textActor->SetTextScaleModeToProp();
-            textActor -> SetInput(e.what());
-            textActor-> GetPosition2Coordinate()->SetCoordinateSystemToNormalizedViewport();
-            textActor-> GetPosition2Coordinate()->SetValue(1,1);
-            textActor-> GetTextProperty()->SetFontSize(20);
-            textActor-> GetTextProperty()-> SetFontFamilyToArial();
-            textActor-> GetTextProperty()-> SetJustificationToCentered();
-            textActor-> GetTextProperty()-> BoldOn();
-            textActor-> GetTextProperty()-> ItalicOn();
-            textActor-> GetTextProperty()-> SetColor(1,0,0);
-
-            this->ren1 -> AddViewProp(textActor);
-            this->ren1 -> SetBackground(0.1,0.2,0.4);
-
-            cout << "vtk complete_P" << endl;
-            this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+            QMessageBox msgBox;
+            msgBox.setText("No pressure data!");
+            msgBox.exec();
+            return;
         }
 
         //        vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
@@ -357,6 +465,7 @@ void mainwindow::on_radioButton_P_toggled(bool checked)
         plane -> SetOrigin(n1);
         plane -> SetNormal(n2);
 
+        data->GetPointData()->SetScalars(data_array); // set the scalar value for visualize
         vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
         planecut -> SetInputData(data);
         planecut -> SetCutFunction(plane);
@@ -386,7 +495,7 @@ void mainwindow::on_radioButton_P_toggled(bool checked)
         cout << "vtkrenderer_P" << endl;
 
         //    this->ren1 -> Clear();
-        this->ren1 -> SetBackground(0.1,0.2,0.4);
+
         this->ren1 -> AddActor(planeActor);
         this->actors.push_back(planeActor);
         this->ren1 -> AddActor2D(scalarActor);
@@ -411,7 +520,7 @@ void mainwindow::on_radioButton_P_toggled(bool checked)
             this->actors.push_back(planeActor);
 
         }
-        cout << "vtk complete_Q" << endl;
+        cout << "vtk complete_P" << endl;
         this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
         //cout << "add renderer complete" << endl;
     }
@@ -424,7 +533,7 @@ void mainwindow::on_radioButton_Q_toggled(bool checked)
         cout << "Q is on!" << endl;
 
         deleteActors();
-        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
 
 
         //this->setupUi(this);
@@ -435,8 +544,13 @@ void mainwindow::on_radioButton_Q_toggled(bool checked)
 
         vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
         data->DeepCopy(this->air[0]);
+        vtkSmartPointer<vtkDataArray> data_array;
+        data_array = data->GetPointData()->GetArray("Q");
+        if(data_array == nullptr){
+            data_array = data->GetPointData()->GetArray("q");
+        }
         try{
-            if(data->GetPointData()->GetAbstractArray("Q") == nullptr){
+            if(data->GetPointData()->GetArray("Q") == nullptr){
                 throw no_data();
             }
         }
@@ -444,25 +558,10 @@ void mainwindow::on_radioButton_Q_toggled(bool checked)
 
         catch (const no_data &e){
             cerr<<e.what()<<endl;
-
-            vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor> :: New();
-            textActor->SetTextScaleModeToProp();
-            textActor -> SetInput(e.what());
-            textActor-> GetPosition2Coordinate()->SetCoordinateSystemToNormalizedViewport();
-            textActor-> GetPosition2Coordinate()->SetValue(1,1);
-            textActor-> GetTextProperty()->SetFontSize(20);
-            textActor-> GetTextProperty()-> SetFontFamilyToArial();
-            textActor-> GetTextProperty()-> SetJustificationToCentered();
-            textActor-> GetTextProperty()-> BoldOn();
-            textActor-> GetTextProperty()-> ItalicOn();
-            textActor-> GetTextProperty()-> SetColor(1,0,0);
-
-            ren1 -> AddViewProp(textActor);
-            ren1 -> SetBackground(0.1,0.2,0.4);
-
-            cout << "vtk complete_Q" << endl;
-            this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-
+            QMessageBox msgBox;
+            msgBox.setText("NO Q!");
+            msgBox.exec();
+            return;
 
         }
         //============================================================================================
@@ -474,7 +573,7 @@ void mainwindow::on_radioButton_Q_toggled(bool checked)
         vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
         ploydata->ShallowCopy(vertexFilter->GetOutput());
 
-        ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray("Q")); // set the scalar value for visualize
+        ploydata->GetPointData()->SetScalars(data_array); // set the scalar value for visualize
 
         vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         planeMapper->SetInputData(ploydata);
@@ -546,7 +645,7 @@ void mainwindow::on_radioButton_PO_toggled(bool checked)
 
         deleteActors();
 
-        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
 
         //this->setupUi(this);
         //cout << "renderwindow1" << endl;
@@ -559,13 +658,13 @@ void mainwindow::on_radioButton_PO_toggled(bool checked)
         //lut->SetTableRange(-100,350);
         lut->Build();
 
-        double r = 0, g = 0, b = 0;
+        double r = 256, g = 0, b = 0;
         for(int i = 0; i< 125 ; i+=4){
             lut->SetTableValue(i,r,g,b);
-            lut->SetTableValue(i+1,r+2,g,b);
-            lut->SetTableValue(i+2,r+4,g,b);
-            lut->SetTableValue(i+3,r+6,g,b);
-            r += 8;
+            lut->SetTableValue(i+1,r-2,g,b);
+            lut->SetTableValue(i+2,r-4,g,b);
+            lut->SetTableValue(i+3,r-6,g,b);
+            r -= 8;
             //b += 4;
             //g -= 4;
         }
@@ -582,36 +681,36 @@ void mainwindow::on_radioButton_PO_toggled(bool checked)
 
 
         cout<< "vtkrender"<<endl;
+        try {
+            if(objects.size() == 0)
+            {
+                throw no_data();
+            }
+        } catch (const no_data &e) {
+            cerr<<e.what()<<endl;
+            QMessageBox msgBox;
+            msgBox.setText("No objects!");
+            msgBox.exec();
+            return;
+        }
         for(int j =0; j < objects.size();j++){
 
             vtkSmartPointer<vtkDataSet> data = objects[j];
+            vtkSmartPointer<vtkDataArray> data_array;
+            data_array = data->GetPointData()->GetArray("P");
+            if(data_array == nullptr){
+                data_array = data->GetPointData()->GetArray("p");
+            }
             try{
-                if(data->GetPointData()->GetAbstractArray("P") == nullptr){
+                if(data_array == nullptr){
                     throw no_data();
                 }
             }
             catch (const no_data &e){
-                cerr<<e.what()<<endl;
-
-                vtkSmartPointer<vtkTextActor> textActor = vtkSmartPointer<vtkTextActor> :: New();
-                textActor->SetTextScaleModeToProp();
-                textActor -> SetInput(e.what());
-                textActor-> GetPosition2Coordinate()->SetCoordinateSystemToNormalizedViewport();
-                textActor-> GetPosition2Coordinate()->SetValue(1,1);
-                textActor-> GetTextProperty()->SetFontSize(20);
-                textActor-> GetTextProperty()-> SetFontFamilyToArial();
-                textActor-> GetTextProperty()-> SetJustificationToCentered();
-                textActor-> GetTextProperty()-> BoldOn();
-                textActor-> GetTextProperty()-> ItalicOn();
-                textActor-> GetTextProperty()-> SetColor(1,0,0);
-
-                ren1 -> AddViewProp(textActor);
-                textactors.push_back(textActor);
-                ren1 -> SetBackground(0.1,0.2,0.4);
-
-                cout << "vtk complete_P" << endl;
-                this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
-                break;
+                QMessageBox msgBox;
+                msgBox.setText("No pressure data on the objects!");
+                msgBox.exec();
+                return;
             }
             vtkSmartPointer<vtkWarpVector> warp = vtkSmartPointer<vtkWarpVector>::New();
             warp->SetInputData(data);
@@ -620,7 +719,7 @@ void mainwindow::on_radioButton_PO_toggled(bool checked)
             planeMapper->SetInputData(data);
             planeMapper -> ScalarVisibilityOn();
             planeMapper-> SetLookupTable(lut);
-            double* arr_range = data->GetPointData()->GetArray("P")->GetRange();
+            double* arr_range = data_array->GetRange();
             planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
 
             cout<< "actor" <<endl;
@@ -663,67 +762,72 @@ void mainwindow::on_horizontalSlider_valueChanged(int value)
         cout << "P is on!" << endl;
 
         deleteActors();
-        this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
 
 
         vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
         this->qvtkWidget->SetRenderWindow(renderWindow);
         vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
         data->DeepCopy(this->air[0]);
-
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-        data->GetPointData()->RemoveArray(1);
-
-        vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
-        lut->SetNumberOfColors(256);
-        lut->Build();
-
-        double r = 0, g = 0, b = 0;
-        for(int i = 0; i< 253 ; i+=4){
-            lut->SetTableValue(i,r,g,b);
-            lut->SetTableValue(i+1,r+1,g,b);
-            lut->SetTableValue(i+2,r+2,g,b);
-            lut->SetTableValue(i+3,r+3,g,b);
-            r += 4;
-            b += 4;
-            g += 4;
+        vtkSmartPointer<vtkDataArray> data_array;
+        data_array = data->GetPointData()->GetArray("P");
+        if(data_array == nullptr){
+            data_array = data->GetPointData()->GetArray("p");
         }
+        try{
+            if(data_array == nullptr){
+                throw no_data();
+            }
+        }
+        catch (const no_data &e){
+            cerr<<e.what()<<endl;
+            QMessageBox msgBox;
+            msgBox.setText("No pressure data!");
+            msgBox.exec();
+            return;
+        }
+
+
+        
 
         vtkSmartPointer<vtkPlane> plane = vtkSmartPointer<vtkPlane>::New();
 
         // HERE: we want to compress 0~100 integers to the scale the dataset complys.
-        double z_value = static_cast<double>(value) / 20.0 - 2.0;
+        // want to iterate over Z
+
+        double* bounds = air[0] -> GetBounds();
+        double z_range = fabs(bounds[5] - bounds[4]);
+        //double z_value = static_cast<double>(value) / z_range - ((0 - bounds[4] < bounds[5] ? bounds[4] : bounds[5]));
+        double z_value = static_cast<double>(value + 1) * (bounds[5] - bounds[4]) / 100 + bounds[4];
         double n1[] = {9,1,z_value}; // coordinates, needs projection
         double n2[] = {0,0,1}; // choose which surface to display (0,0,1) is x-y surface.
         plane -> SetOrigin(n1);
         plane -> SetNormal(n2);
-
+        data->GetPointData()->SetScalars(data_array);
         vtkSmartPointer<vtkCutter> planecut = vtkSmartPointer<vtkCutter>::New();
         planecut -> SetInputData(data);
         planecut -> SetCutFunction(plane);
         planecut -> Update();
 
-        double* arr_range = data->GetPointData()->GetArray("P")->GetRange();
 
         vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
         planeMapper->SetInputData(planecut->GetOutput());
-        planeMapper->SetScalarRange(arr_range[0],arr_range[1]);  //set map range
+        planeMapper->SetScalarRange(-10,10);  //set map range
 
         vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
         scalarActor->SetMaximumNumberOfColors(256);
-        scalarActor->SetLookupTable(lut);
+        scalarActor->SetLookupTable(planeMapper->GetLookupTable());
         scalarActor->SetHeight(0.5);
         scalarActor->SetWidth(0.12);
         scalarActor->SetPosition(0.04, 0.02);
-        scalarActor->SetPosition2(0.90, 0.20);
+        //scalarActor->SetPosition2(0.90, 0.20);
         scalarActor->SetNumberOfLabels(5);
         scalarActor->SetLabelFormat("%.4g");
         scalarActor->VisibilityOn();
         vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
         labeltype->SetFontSize(5);
         scalarActor->SetLabelTextProperty(labeltype);
+
 
         vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
         planeActor ->SetMapper(planeMapper);
@@ -735,6 +839,7 @@ void mainwindow::on_horizontalSlider_valueChanged(int value)
         for (int j =0 ; j< objects.size(); j++){
             vtkSmartPointer<vtkDataSetMapper> planeMapper = vtkSmartPointer<vtkDataSetMapper>::New();
             planeMapper->SetInputData(objects[j]);
+            planeMapper->ScalarVisibilityOff();
             vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
             planeActor ->SetMapper(planeMapper);
             this->ren1->AddActor(planeActor);
@@ -755,8 +860,342 @@ void mainwindow::openAbout()
 
 void mainwindow::on_checkBox_clicked(bool checked)
 {
+
     if(checked)
     {
+        // FIRST PART: DEAL WITH EXCEPTIONS
+        // Which other parts can be bounded with streamlines?
+        try {
+            if(lines.size() == 0){
+                throw no_data();
+            }
+        } catch (const no_data &e) {
+            cerr<<e.what()<<endl;
+            QMessageBox msgBox;
+            msgBox.setText("Data contains NO vector field!");
+            msgBox.exec();
+            return;
+        }
+
+        //==================================//
+
+        vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+        for(int i = 0; i < lines[0]->GetNumberOfPoints(); i++)
+        {
+            points->InsertNextPoint(lines[0]->GetPoint(i));
+        }
+
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        vtkSmartPointer<vtkCellArray> cellArray = vtkSmartPointer<vtkCellArray>::New();
+        for(int i = 0; i < lines.size(); i++)
+        {
+            cout << "i: " << i << endl;
+            for(int j = 0; j < lines[i]->GetNumberOfCells(); j++)
+            {
+                cellArray->InsertNextCell(lines[i]->GetCell(j));
+            }
+        }
+        cout << "Cell array" << endl;
+        vtkSmartPointer<vtkPolyData> polyData = vtkSmartPointer<vtkPolyData>::New();
+        polyData->SetPoints(points);
+        polyData->SetLines(cellArray);
+        vtkSmartPointer<vtkPolyDataMapper> polyDataMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        polyDataMapper->SetInputData(polyData);
+        streamActor->SetMapper(polyDataMapper);
+        this->ren1->AddActor(streamActor);
+
+        this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+    }
+    else{
+        this->ren1->RemoveActor(streamActor);
+    }
+}
+
+void mainwindow::on_radioButton_U_toggled(bool checked)
+{
+    if(checked)
+    {
+        cout << "U is on!" << endl;
+        deleteActors();
+        //this->qvtkWidget->GetRenderWindow()->RemoveRenderer(ren1);
+        vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+        data->DeepCopy(this->air[0]);
+        try {
+            if(data->GetPointData()->GetArray("U") == nullptr){
+                throw no_data();
+            }
+        } catch (const no_data &e) {
+            cerr<<e.what()<<endl;
+            QMessageBox msgBox;
+            msgBox.setText("Data contains NO vector field velocity!");
+            msgBox.exec();
+            return;
+        }
+
+        vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+        vertexFilter->SetInputData(data);
+        vertexFilter->Update();
+        vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
+        ploydata->ShallowCopy(vertexFilter->GetOutput());
+        ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray("U")); // set the scalar value for visualize
+        vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        planeMapper->SetScalarRange(ploydata->GetPointData()->GetArray("U")->GetRange());
+        planeMapper->SetInputData(ploydata);
+        //        planeMapper -> ScalarVisibilityOn();
+        //        planeMapper -> SetScalarModeToUsePointData();
+        //        planeMapper -> SetColorModeToMapScalars();
+        cout<< "actor" <<endl;
+        vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+        scalarActor->SetLookupTable(planeMapper->GetLookupTable());
+        vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+        planeActor ->SetMapper(planeMapper);
+        cout<< "vtkrender"<<endl;
+
+        //ren1 -> SetBackground(0.1,0.2,0.4);
+        this->ren1 -> SetBackground(0.1,0.2,0.4);
+        ren1 -> AddActor(planeActor);
+        actors.push_back(planeActor);
+        ren1 -> AddActor2D(scalarActor);
+        actor2ds.push_back(scalarActor);
+        this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
+
 
     }
+}
+
+void mainwindow::on_horizontalSlider_2_valueChanged(int value)
+{
+    deleteActors();
+    vtkSmartPointer<vtkUnstructuredGrid> data = vtkSmartPointer<vtkUnstructuredGrid>::New();
+    data->DeepCopy(this->air[0]);
+    cout << "TRY LEMA" <<endl;
+    try {
+        if(data->GetPointData()->GetArray("W") == nullptr){
+            throw no_data();
+        }
+    } catch (const no_data &e) {
+        cerr<<e.what()<<endl;
+        QMessageBox msgBox;
+        msgBox.setText("Data contains NO scalar field velocity!");
+        msgBox.exec();
+        return;
+    }
+    cout << "catch lema" << endl;
+    double i = 0, y_min = INT_MAX;
+        vector<int> ids;
+        while(i < data->GetNumberOfPoints()){
+            double *pos;
+            pos = data->GetPoint(i);
+            if(pos[1]==y_min){
+                ids.push_back(i);
+              //  cout<<"x: "<<pos[0]<<" y: "<< pos[1]<<" z: "<<pos[2]<<endl;
+            }
+            else if(pos[1] < y_min){
+            y_min = pos[1];
+            ids.resize(0);
+            ids.push_back(i);
+            //cout<<"fresh min; clear"<<endl;
+            //cout<<"x: "<<pos[0]<<" y: "<< pos[1]<<" z: "<<pos[2]<<endl;
+            }
+            i++;
+        }
+        cout<< "ids_get y_min:"<<y_min<<endl;
+        vector<vector<int>> x_lines;
+        unordered_map<double, int> x_dic;
+        for (int i =0; i< ids.size(); i++){
+            double *pos;
+            pos = data->GetPoint(ids[i]);
+            if(x_dic.count(pos[0])){
+                x_lines[x_dic[pos[0]]].push_back(ids[i]);
+            }
+            else{
+                vector<int> line;
+                line.push_back(ids[i]);
+                x_lines.push_back(line);
+                x_dic[pos[0]] = x_lines.size()-1;
+            }
+        }
+        cout<<"x_lines get "<<x_lines.size()<<endl;
+        cout<<"x_lines 0 0 "<<x_lines[0][0]<<endl;
+        cout<<"ids 0 0"<<ids[0]<<endl;
+        vector<vector<int>> z_lines;
+        unordered_map<double, int> z_dic;
+        for (int i =0; i< ids.size(); i++){
+            double *pos;
+            pos = data->GetPoint(ids[i]);
+            if(z_dic.count(pos[2])){
+                z_lines[z_dic[pos[2]]].push_back(ids[i]);
+            }
+            else{
+                vector<int> line;
+                line.push_back(ids[i]);
+                z_lines.push_back(line);
+                z_dic[pos[2]] = z_lines.size()-1;
+            }
+        }
+
+    double* pos;
+
+    double r1, r2, r3, r4;
+    double d1, d2, d3, d4;
+    double tv[3];
+    double interval = 0.001;
+    double *next_p = new double[3];
+    int subId;
+    double pcoords[3];
+    double weights[5];
+
+
+    vtkDataArray *u = data->GetPointData()->GetArray("U");
+    vtkDataArray *v = data->GetPointData()->GetArray("V");
+    vtkDataArray *w = data->GetPointData()->GetArray("W");
+
+    vector<int> cur_lines= z_lines[value];
+    cout<<"line_size "<<cur_lines.size()<<endl;
+    for (int j =0 ; j<cur_lines.size(); j++){
+
+        int origin = cur_lines[j];
+        pos = data->GetPoint(origin);
+        vtkSmartPointer<vtkPoints> point_array = vtkSmartPointer<vtkPoints>::New();
+        //point_array->SetNumberOfPoints(52000);
+        point_array->InsertNextPoint(pos);
+
+        cout<<origin<<" the initial location"<<endl;
+
+        //caculate second point=============================
+        tv[0] = u->GetTuple(origin)[0];
+        tv[1] = v->GetTuple(origin)[0];
+        tv[2] = w->GetTuple(origin)[0];
+
+        next_p[0] = pos[0]+tv[0]*interval;
+        next_p[1] = pos[1]+tv[1]*interval;
+        next_p[2] = pos[2]+tv[2]*interval;
+
+        point_array->InsertNextPoint(next_p);
+
+        vtkIdType CellId = data->FindCell(next_p,NULL,0,0.01,subId,pcoords,weights);
+        vtkSmartPointer<vtkCell> cell = data->GetCell(CellId);
+        cout<<"cell_get: "<< CellId<<endl;
+        vtkIdType count = 1;
+        for (int i = 0; i< 3 ;i++){
+            pos[i] = next_p[i];
+        }
+        point_array->InsertNextPoint(pos);
+
+        while(count<=50000){
+            //    cout<<"loop start"<<endl;
+            d1 = sqrt(pow((cell->GetPoints()->GetData()->GetTuple(0)[0]-pos[0]),2)+pow((cell->GetPoints()->GetData()->GetTuple(0)[1]-pos[1]),2)+pow((cell->GetPoints()->GetData()->GetTuple(0)[2]-pos[2]),2));
+            d2 = sqrt(pow((cell->GetPoints()->GetData()->GetTuple(1)[0]-pos[0]),2)+pow((cell->GetPoints()->GetData()->GetTuple(1)[1]-pos[1]),2)+pow((cell->GetPoints()->GetData()->GetTuple(1)[2]-pos[2]),2));
+            d3 = sqrt(pow((cell->GetPoints()->GetData()->GetTuple(2)[0]-pos[0]),2)+pow((cell->GetPoints()->GetData()->GetTuple(2)[1]-pos[1]),2)+pow((cell->GetPoints()->GetData()->GetTuple(2)[2]-pos[2]),2));
+            d4 = sqrt(pow((cell->GetPoints()->GetData()->GetTuple(4)[0]-pos[0]),2)+pow((cell->GetPoints()->GetData()->GetTuple(4)[1]-pos[1]),2)+pow((cell->GetPoints()->GetData()->GetTuple(4)[2]-pos[2]),2));
+
+            r1 = (1/d1)/(1/d1+1/d2+1/d3+1/d4);
+            r2 = (1/d2)/(1/d1+1/d2+1/d3+1/d4);
+            r3 = (1/d3)/(1/d1+1/d2+1/d3+1/d4);
+            r4 = (1/d4)/(1/d1+1/d2+1/d3+1/d4);
+
+            tv[0] = u->GetTuple(cell->GetPointId(0))[0]*r1+u->GetTuple(cell->GetPointId(1))[0]*r2+u->GetTuple(cell->GetPointId(2))[0]*r3+u->GetTuple(cell->GetPointId(4))[0]*r4;
+            tv[1] = v->GetTuple(cell->GetPointId(0))[0]*r1+v->GetTuple(cell->GetPointId(1))[0]*r2+v->GetTuple(cell->GetPointId(2))[0]*r3+v->GetTuple(cell->GetPointId(4))[0]*r4;
+            tv[2] = w->GetTuple(cell->GetPointId(0))[0]*r1+w->GetTuple(cell->GetPointId(1))[0]*r2+w->GetTuple(cell->GetPointId(2))[0]*r3+w->GetTuple(cell->GetPointId(4))[0]*r4;
+
+            next_p[0] = pos[0]+tv[0]*interval;
+            next_p[1] = pos[1]+tv[1]*interval;
+            next_p[2] = pos[2]+tv[2]*interval;
+
+            //vtkIdType P_CellId = CellId;
+
+            CellId = data->FindCell(next_p,NULL,0,0.01,subId,pcoords,  weights);
+            // cout<<"next cell_id"<< CellId<<endl;
+            //if(CellId==P_CellId){
+            // 	interval = interval*2;
+            /// 	continue;
+            // }
+            if(CellId<0){
+                cout<<"break"<<endl;
+                break;
+            }
+
+            cell = data->GetCell(CellId);
+            for(int i =0; i< 3; i++){
+                pos[i] = next_p[i];
+                cout<<pos[i]<<" ";
+            }
+            cout<<endl;
+            point_array->InsertNextPoint(next_p);
+            count++;
+            //     interval=0.01;
+            // cout<<count<<endl;
+        }
+
+
+
+
+        cout<< "polyline"<<endl;
+        vtkSmartPointer<vtkPolyLine> PolyLine= vtkSmartPointer<vtkPolyLine>::New();
+        PolyLine->GetPointIds()->SetNumberOfIds(count);
+        for( int i = 0; i <(int)count ; i++)
+        {
+            PolyLine->GetPointIds()->SetId(i,i);
+        }
+        vtkSmartPointer<vtkCellArray> cells = vtkSmartPointer<vtkCellArray>::New();
+        cells->InsertNextCell(PolyLine);
+        vtkSmartPointer<vtkPolyData> linesPolyData =vtkSmartPointer<vtkPolyData>::New();
+        linesPolyData->SetPoints(point_array);
+        linesPolyData->SetLines(cells);
+        cout<<"polydata over"<<endl;
+        vtkSmartPointer<vtkPolyDataMapper> LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        //LineMapper->SetInputConnection(line->GetOutputPort());
+        LineMapper->SetInputData(linesPolyData);
+        vtkSmartPointer<vtkActor> LineActor = vtkSmartPointer<vtkActor>::New();
+        LineActor->SetMapper(LineMapper);
+        LineActor->GetProperty()->SetLineWidth(5);
+
+        ren1->AddActor(LineActor);
+        actors.push_back(LineActor);
+        cout<<"add actor over"<<endl;
+        cout<<"j value "<<j<<" "<<cur_lines.size()<<endl;
+    }
+    vtkSmartPointer<vtkVertexGlyphFilter> vertexFilter = vtkSmartPointer<vtkVertexGlyphFilter>::New();
+    vertexFilter->SetInputData(data);
+    vertexFilter->Update();
+
+    vtkSmartPointer<vtkPolyData> ploydata = vtkSmartPointer<vtkPolyData>::New(); //make the data into vertex
+    ploydata->ShallowCopy(vertexFilter->GetOutput());
+    cout<< "vlo_array"<<endl;
+    cout<< "size" << vlo_array->GetActualMemorySize()<<endl;
+    ploydata->GetPointData()->SetScalars(this->vlo_array);
+    cout<< "vlo_array end"<<endl;
+
+    double* arr_range = this->vlo_array->GetRange();
+    vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    planeMapper->SetInputData(ploydata);
+    planeMapper -> ScalarVisibilityOn();
+    planeMapper -> SetScalarModeToUsePointData();
+    planeMapper -> SetColorModeToMapScalars();
+    planeMapper ->SetScalarRange(0,30);
+
+    vtkSmartPointer<vtkScalarBarActor> scalarActor = vtkSmartPointer<vtkScalarBarActor> :: New();
+    scalarActor->SetMaximumNumberOfColors(256);
+    scalarActor->SetLookupTable(planeMapper->GetLookupTable());
+    scalarActor->SetHeight(0.5);
+    scalarActor->SetWidth(0.12);
+    scalarActor->SetPosition(0.04, 0.02);
+    //scalarActor->SetPosition2(0.90, 0.20);
+    scalarActor->SetNumberOfLabels(5);
+    scalarActor->SetLabelFormat("%.4g");
+    scalarActor->VisibilityOn();
+    vtkSmartPointer<vtkTextProperty> labeltype = vtkSmartPointer<vtkTextProperty>:: New();
+    labeltype->SetFontSize(5);
+    scalarActor->SetLabelTextProperty(labeltype);
+    this->ren1->AddActor2D(scalarActor);
+    this->actor2ds.push_back(scalarActor);
+
+    vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
+    planeActor ->SetMapper(planeMapper);
+    ren1->AddActor(planeActor);
+    actors.push_back(planeActor);
+
+
+
+    this->qvtkWidget->GetRenderWindow()->AddRenderer(ren1);
 }

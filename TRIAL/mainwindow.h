@@ -38,14 +38,22 @@ private slots:
 
     void on_checkBox_clicked(bool checked);
 
+    void on_radioButton_U_toggled(bool checked);
+
+    void on_horizontalSlider_2_valueChanged(int value);
+
 private:
-    //Ui::mainwindow *ui;
     vector<vtkSmartPointer<vtkDataSet>> air;
     vector<vtkSmartPointer<vtkDataSet>> objects;
+    vector<vtkSmartPointer<vtkDataSet>> lines;
     vtkRenderer* ren1;
     vector<vtkSmartPointer<vtkActor>> actors;
     vector<vtkSmartPointer<vtkActor2D>> actor2ds;
     vector<vtkSmartPointer<vtkTextActor>> textactors;
+    vtkSmartPointer<vtkActor> streamActor;
+    vtkSmartPointer<vtkDoubleArray> vlo_array;
+
+
     void deleteActors();
 };
 
