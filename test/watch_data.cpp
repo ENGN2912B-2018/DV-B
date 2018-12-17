@@ -38,6 +38,8 @@
 #include <vtkLine.h>
 #include <vtkCellArray.h>
 #include <vtkPolyLine.h>
+#include <vtkNew.h>
+#include <vtkDoubleArray.h>
 //#include "vtkScalarBarActor.h"
 #include <map>
 VTK_MODULE_INIT(vtkRenderingFreeType)
@@ -140,19 +142,31 @@ int main(){
     vtkDataArray *u = data->GetPointData()->GetArray("U"); 
     vtkDataArray *v = data->GetPointData()->GetArray("V");
     vtkDataArray *w = data->GetPointData()->GetArray("W");
+    
+    //vtkSmartPointer<vtkDataArray> velo = vtkSmartPointer<vtkDataArray>::Allocate(100000);
+    //vtkNew<vtkDataArray> velo;
+    vtkSmartPointer<vtkDoubleArray> velo = vtkSmartPointer<vtkDoubleArray>::New();
+    //velo->NewInstance();
+    cout<<"check begin"<<endl;
+    velo->SetNumberOfComponents(1);
+    cout<<"check 1"<<endl;
+    velo->SetNumberOfTuples(data->GetNumberOfPoints());
+    cout<<" set complete "<<endl;
+    double component;
+    for(vtkIdType i = 0; i <= data->GetNumberOfPoints(); i++){
+        component = sqrt(pow(u->GetTuple(i)[0],2)+pow(v->GetTuple(i)[0],2)+pow(w->GetTuple(i)[0],2));
+	velo->SetTuple1(i,component);
+    }
+    cout<<velo->GetNumberOfTuples()<<" num"<<endl;    
     double tv[3];
-    int origin = (int) data->GetCell(220212)->GetPointId(0);
-    cout<<origin<<" the initial location"<<endl;
-    pos = data->GetPoint(ids[99]);
-    tv[0] = u->GetTuple(ids[99])[0];
-    tv[1] = v->GetTuple(ids[99])[0];
-    tv[2] = w->GetTuple(ids[99])[0];
+    pos = data->GetPoint(ids[6666]);
+    tv[0] = u->GetTuple(ids[6666])[0];
+    tv[1] = v->GetTuple(ids[6666])[0];
+    tv[2] = w->GetTuple(ids[6666])[0];
     //cout<<"the initial velocity "<<tv[0]<<" "<<tv[1]<<" "<<tv[2]<<endl;
-    //cout<<u->GetMaxId()<<endl; 
     cout<<"load vtu success"<<endl;
     
     vtkSmartPointer<vtkPoints> point_array = vtkSmartPointer<vtkPoints>::New();
-    point_array->SetNumberOfPoints(52000);
     point_array->InsertNextPoint(pos);    
     
     double interval = 0.001;
@@ -178,7 +192,8 @@ int main(){
         
     cell = data->GetCell(CellId);
     cout<<"check ends"<<endl;
-    pcoord = next_p;
+    for(int i = 0; i<3;i++){
+        pcoord[i] = next_p[i];}
     cout<<"find and get cell success"<<endl;
     //pcoord = data->GetPoint(PointId);
     
@@ -188,10 +203,11 @@ int main(){
     vtkIdType count = 2;
     double bound[6];
     data->GetBounds(bound);
-    cout<<"point2 "<<pcoord[0]<<" "<<pcoord[1]<<" "<<pcoord[2]<<endl;
+    cout<<"point2 "<<bound[0]<<" "<<bound[1]<<" "<<bound[2]<<" "<<bound[3]<<" "<<bound[4]<<" "<<bound[5]<<endl;
     while(count<=5000){
-
-        pos = pcoord;
+        for(int i = 0; i < 3; i++){
+           pos[i] = pcoord[i];
+        }
     //    int index = (int)PointId;
         
        // tv[0] = (u->GetTuple(cell->GetPointId(0))[0]+u->GetTuple(cell->GetPointId(1))[0]+u->GetTuple(cell->GetPointId(2))[0]+u->GetTuple(cell->GetPointId(4))[0])/4;
@@ -213,9 +229,9 @@ int main(){
         
         //cout<<"caluculation ends"<<count<<endl;
         
-    //    tv[0] = u->GetTuple(cell->GetPointId(0))[0]*r1+u->GetTuple(cell->GetPointId(1))[0]*r2+u->GetTuple(cell->GetPointId(2))[0]*r3+u->GetTuple(cell->GetPointId(4))[0]*r4;
-    //    tv[1] = v->GetTuple(cell->GetPointId(0))[0]*r1+v->GetTuple(cell->GetPointId(1))[0]*r2+v->GetTuple(cell->GetPointId(2))[0]*r3+v->GetTuple(cell->GetPointId(4))[0]*r4;
-    //    tv[2] = w->GetTuple(cell->GetPointId(0))[0]*r1+w->GetTuple(cell->GetPointId(1))[0]*r2+w->GetTuple(cell->GetPointId(2))[0]*r3+w->GetTuple(cell->GetPointId(4))[0]*r4;
+          tv[0] = u->GetTuple(cell->GetPointId(0))[0]*r1+u->GetTuple(cell->GetPointId(1))[0]*r2+u->GetTuple(cell->GetPointId(2))[0]*r3+u->GetTuple(cell->GetPointId(4))[0]*r4;
+          tv[1] = v->GetTuple(cell->GetPointId(0))[0]*r1+v->GetTuple(cell->GetPointId(1))[0]*r2+v->GetTuple(cell->GetPointId(2))[0]*r3+v->GetTuple(cell->GetPointId(4))[0]*r4;
+          tv[2] = w->GetTuple(cell->GetPointId(0))[0]*r1+w->GetTuple(cell->GetPointId(1))[0]*r2+w->GetTuple(cell->GetPointId(2))[0]*r3+w->GetTuple(cell->GetPointId(4))[0]*r4;
  
         
         next_p[0] = pos[0]+tv[0]*interval;
@@ -258,29 +274,15 @@ int main(){
     //pcoord[2] = (cell->GetPoints()->GetData()->GetTuple(0)[2]+cell->GetPoints()->GetData()->GetTuple(1)[2]+cell->GetPoints()->GetData()->GetTuple(2)[2]+cell->GetPoints()->GetData()->GetTuple(4)[2])/4;
    //cout<<"location"<<"count"<<" "<<pcoord[0]<<" "<<pcoord[1]<<" "<<pcoord[2]<<endl;
    // pcoord = data->GetPoint(PointId);
-    pcoord = next_p;
+    //pcoord = next_p;
+    for(int i = 0;i<3;i++){
+	pcoord[i] = next_p[i];
+    }
     point_array->InsertNextPoint(pcoord);
     count++;
     //cout<<count<<endl;
     interval=0.01;
     }
-
-    //vtkSmartPointer<vtkLineSource> line = vtkSmartPointer<vtkLineSource>::New();
-    //line->SetPoints(point_array);
-    //line->Update();
-    //line->SetResolution((int)count-1);
-    //line->Update();
-
-    vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
-
-    //for(unsigned int i = 0; i < (int)count-2; i++)
-    //{
-    //vtkSmartPointer<vtkLine> line =
-    //  vtkSmartPointer<vtkLine>::New();
-    //line->GetPointIds()->SetId(0,i);
-    //line->GetPointIds()->SetId(1,i+1);
-    //lines->InsertNextCell(line);
-    //} 
 
     vtkSmartPointer<vtkPolyLine> PolyLine= vtkSmartPointer<vtkPolyLine>::New();
     PolyLine->GetPointIds()->SetNumberOfIds(count);
@@ -294,16 +296,14 @@ int main(){
     linesPolyData->SetPoints(point_array);
     linesPolyData->SetLines(cells);
 
-//    PolyLine->SetNumberOfPoints(count);
-//    PolyLine->SetPoints(point_array);
-//    PolyLine->Update();
-    
     vtkSmartPointer<vtkPolyDataMapper> LineMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //LineMapper->SetInputConnection(line->GetOutputPort());
     LineMapper->SetInputData(linesPolyData);
     vtkSmartPointer<vtkActor> LineActor = vtkSmartPointer<vtkActor>::New();
     LineActor->SetMapper(LineMapper);
     LineActor->GetProperty()->SetLineWidth(5);
+    vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
+
+    ren1->AddActor(LineActor);
  
     //data->GetPointData()->RemoveArray(1);  // delete the data that we do not want to visualize.
     //data->GetPointData()->RemoveArray(1);
@@ -350,7 +350,7 @@ int main(){
 
     
 
-    ploydata->GetPointData()->SetScalars(ploydata->GetPointData()->GetArray(0)); // set the scalar value for visualize
+    ploydata->GetPointData()->SetScalars(velo);//(ploydata->GetPointData()->GetArray(0)); // set the scalar value for visualize
 
     cout<<"ploy_data"<<ploydata->GetPointData()->GetNumberOfArrays()<<endl;
     vtkSmartPointer<vtkPolyDataMapper> planeMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -373,12 +373,10 @@ int main(){
     vtkSmartPointer<vtkActor> planeActor = vtkSmartPointer<vtkActor> :: New();
     planeActor ->SetMapper(planeMapper);
     cout<< "vtkrender"<<endl;
-    vtkSmartPointer<vtkRenderer> ren1 = vtkSmartPointer<vtkRenderer> :: New();
     ren1 -> SetBackground(0.1,0.2,0.4);
     ren1 -> AddActor(planeActor);
     ren1->AddActor2D(scalarActor);
 
-    ren1->AddActor(LineActor);
 
     cout<<"vtkrender"<<endl;
     vtkSmartPointer<vtkRenderWindow> renWin  = vtkSmartPointer<vtkRenderWindow> :: New();
