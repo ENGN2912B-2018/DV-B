@@ -1,7 +1,7 @@
 #include <vtkSmartPointer.h>
 #include <string>
 #include <vtkGenericDataObjectReader.h>
-#include <vtkXMLUnstructuredGridWriter.H>
+#include <vtkXMLUnstructuredGridWriter.h>
 #include <vtkUnstructuredGrid.h>
 
 int main(int argc, char *argv[])
