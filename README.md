@@ -84,42 +84,41 @@ In our program, we use exception handling to determine if the dataset has the da
 ---
 #### 3.4 Numerical Computation
 1. The computation for the absolute value of velocity<br>
-From the scalar field dataset, each point’s velocity values are stored in three corresponding data arrays: u, v, and w, which are three Cartesian velocity components <img src="https://latex.codecogs.com/gif.latex? (x,y,z)"/>.
-</p >. As we want to visualize the velocity value as colored points, we need to first compute the absolute velocity value of every point. Thus we use the formula: <p align =center><img src="https://latex.codecogs.com/gif.latex? velocity = \sqrt{u^2 + v^2 + w^2}" style="border:none;"></p>
+From the scalar field dataset, each point’s velocity values are stored in three corresponding data arrays: u, v, and w, which are three Cartesian velocity components <img src="https://latex.codecogs.com/gif.latex?(x,y,z)"/> . As we want to visualize the velocity value as colored points, we need to first compute the absolute velocity value of every point. Thus we use the formula: <p align =center><img src="https://latex.codecogs.com/gif.latex?velocity=\sqrt{u^2+v^2+w^2}" style="border:none;"></p>
 After calculating the absolute value of each point, we then visualize the points’ velocity value as colored points.
 
 2. The streamline calculation for scalar field dataset<br>
-As described before, the scalar field contains three Cartesian velocity components at each point. The basic idea is to set up a start point and use these velocity components to calculate the absolute value of velocity at that point. We can locate the position of next point with this absolute value of velocity and start to trace how air flows through space. The detailed steps  and formula are described as follows:
-Assumed that we have picked a starting point <img src="https://latex.codecogs.com/gif.latex? P_0"/>, whose coordinate is  <img src="https://latex.codecogs.com/gif.latex? (x,y,z)"/>. 
+As described before, the scalar field contains three Cartesian velocity components at each point. The basic idea is to set up a start point and use these velocity components to calculate the absolute value of velocity at that point. We can locate the position of next point with this absolute value of velocity and start to trace how air flows through space. The detailed steps and formulas are described as follows:<br>
+Assumed that we have picked a starting point <img src="https://latex.codecogs.com/gif.latex?P_0" />, whose coordinate is <img src="https://latex.codecogs.com/gif.latex?(x,y,z)"/>. 
 <p align = "center">
-<img src="https://latex.codecogs.com/gif.latex? P_0 = (x_0, y_0, z_0)" title="P_0 = (x_0, y_0, z_0)" />
+<img src="https://latex.codecogs.com/gif.latex?P_0=(x_0,y_0,z_0)" title="P_0=(x_0, y_0, z_0)" />
 </p>
-Then, we get the velocity components of <img src="https://latex.codecogs.com/gif.latex? P_0"/> from the dataset: <img src="https://latex.codecogs.com/gif.latex? u_0,v_0,w_0"/> . Here, we set a unit time step <img src="https://latex.codecogs.com/gif.latex? \Delta t"/>. To get the next point’s position we can use the formula below:
+Then, we get the velocity components of <img src="https://latex.codecogs.com/gif.latex? P_0"/> from the dataset: <img src="https://latex.codecogs.com/gif.latex?u_0,v_0,w_0" /> . Here, we set a unit time step <img src="https://latex.codecogs.com/gif.latex?\Delta{t}" />. To get the next point’s position we can use the formula below:
 <p align = "center">
- <img src="https://latex.codecogs.com/gif.latex? P_{next} = (x_0 + \Delta t*u_0, y_0 + \Delta t * v_0 ,z_0 + \Delta t * w_0 )" title="P_{next} = (x_0 + \Delta t*u_0, y_0 + \Delta t * v_0 ,z_0 + \Delta t * w_0 )" />
+ <img src="https://latex.codecogs.com/gif.latex? P_{next}=(x_0+\Delta{t}*u_0,y_0+\Delta{t}*v_0,z_0+\Delta{t}*w_0)" />
 </p >
-Now we know each point <img src="https://latex.codecogs.com/gif.latex? P_i"/>’s coordinate as <img src="https://latex.codecogs.com/gif.latex? (x_i, y_i, z_i)"/>, and we can get the next point’s coordinate <img src="https://latex.codecogs.com/gif.latex? P_{i+1}"/> through calculation:
+Now we know each point <img src="https://latex.codecogs.com/gif.latex? P_i"/>’s coordinate as <img src="https://latex.codecogs.com/gif.latex?(x_i,y_i,z_i)" />, and we can get the next point’s coordinate <img src="https://latex.codecogs.com/gif.latex?P_{i+1}" /> through calculation:
 <p align = "center">
- <img src="https://latex.codecogs.com/gif.latex?P_{i+1} = (x_i + \Delta t*u_i, y_i + \Delta t * v_i , z_i + \Delta t * w_i )" title="P_{i+1} = (x_i + \Delta t*u_i, y_i + \Delta t * v_i , z_i + \Delta t * w_i )" />
+ <img src="https://latex.codecogs.com/gif.latex?P_{i+1}=(x_i+\Delta{t}*u_i,y_i+\Delta{t}*v_i,z_i+\Delta{t}*w_i)" />
 </p >
-For the reason that there may not exist point data value(the velocity components <img src="https://latex.codecogs.com/gif.latex? u_i"/>, <img src="https://latex.codecogs.com/gif.latex? v_i"/> and <img src="https://latex.codecogs.com/gif.latex? w_i"/> ) in the position result we get from our calculation.
-We now get the next point through calculation, but there may not necessarily be any points at that exact location. We then implement a built-in VTK function: FindCell to get the cell which the point is in. In the dataset, each cell is of tetrahedron type and has 4 vertices. From the cell we get, we can have the coordinates of the 4 vertices of this cell <img src="https://latex.codecogs.com/gif.latex? (vertex1, vertex2, vertex3, vertex4)"/>. Then we can calculate the distances between the 4 vertices and the point pi which are <img src="https://latex.codecogs.com/gif.latex? d1, d2, d3, d4"/>, respectively. The distance calculation is carried out using the following formula:
+For the reason that there may not exist point data value(the velocity components <img src="https://latex.codecogs.com/gif.latex?u_i" />, <img src="https://latex.codecogs.com/gif.latex?v_i" /> and <img src="https://latex.codecogs.com/gif.latex?w_i" /> ) in the position result we get from our calculation.
+We now get the next point through calculation, but there may not necessarily be any points at that exact location. We then implement a built-in VTK function: FindCell to get the cell which the point is in. In the dataset, each cell is of tetrahedron type and has 4 vertices. From the cell we get, we can have the coordinates of the 4 vertices of this cell <img src="https://latex.codecogs.com/gif.latex?(vertex1,vertex2,vertex3,vertex4)" />. Then we can calculate the distances between the 4 vertices and the point pi which are <img src="https://latex.codecogs.com/gif.latex?d1,d2,d3,d4" />, respectively. The distance calculation is carried out using the following formula:
 <p align = "center">
-<img src="https://latex.codecogs.com/gif.latex?d = \sqrt{(x_a - x_b)^2 + (y_a - y_b)^2 + (z_a - z_b)^2}" title="d = \sqrt{(x_a - x_b)^2 + (y_a - y_b)^2 + (z_a - z_b)^2}" />
+<img src="https://latex.codecogs.com/gif.latex?d = \sqrt{(x_a-x_b)^2+(y_a-y_b)^2+(z_a-z_b)^2}" />
 </p >
-Then we can calculate the weights <img src="https://latex.codecogs.com/gif.latex? r_1, r_2, r_3, r_4"/>:
+Then we can calculate the weights <img src="https://latex.codecogs.com/gif.latex?r_1,r_2,r_3,r_4" />:
 <p align = "center">
-<img src="https://latex.codecogs.com/gif.latex? r_k = \frac{1/d_k}{\sum 1/d_k}(k = 1,2,3,4)" title="r_k = \frac{1/d_k}{\sum_{}d_k}(k = 1,2,3,4)" />
+<img src="https://latex.codecogs.com/gif.latex?r_k=\frac{1/d_k}{\sum{1/d_k}}(k=1,2,3,4)" />
 </p >
-Since the velocity data of the 4 vertices (uvertexk, vvertexk, wvertexk)is known, we can calculate the velocity data of the point pi. 
+Since the velocity data of the 4 vertices <img src="https://latex.codecogs.com/gif.latex?(u_{vertex_k},v_{vertex_k},w_{vertex_k})" />is known, we can calculate the velocity data of the point pi. 
 <p align = "center">
-<img src="https://latex.codecogs.com/gif.latex?u_i = \sum_{k} u_{vertex_k} * r_k" title="u_i = \sum u_{vertex_k} * r_k" />
-</p >
-<p align = "center">
-<img src="https://latex.codecogs.com/gif.latex?v_i = \sum_{k} v_{vertex_k} * r_k" title="v_i = \sum v_{vertex_k} * r_k" />
+<img src="https://latex.codecogs.com/gif.latex?u_i=\sum_{k}u_{vertex_k}*r_k" />
 </p >
 <p align = "center">
-<img src="https://latex.codecogs.com/gif.latex?w_i = \sum_{k} w_{vertex_k} * r_k" title="w_i = \sum w_{vertex_k} * r_k" />
+<img src="https://latex.codecogs.com/gif.latex?v_i=\sum_{k}v_{vertex_k}*r_k" />
+</p >
+<p align = "center">
+<img src="https://latex.codecogs.com/gif.latex?w_i=\sum_{k}w_{vertex_k}*r_k" />
 </p >
 After we get a series of points positions, we can use another VTK function vtkPolyLine to connect these points as a sequence, generating the streamline. Choosing different starting points can result in different streamlines being generated. 
  
