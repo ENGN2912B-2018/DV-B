@@ -35,35 +35,45 @@ The goal of this project is to develop a generic tool to visualize airflow field
 The external libraries that we use are VTK-8.1.2 and Qt-5.11.0.
 
 #### 2.2 Functional Block Diagrams
-
-Figure[] : the software architecture of our program
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/Architecture.png)
+<p align = center>Figure 1: the software architecture of our program</p>
 
 #### 2.3 Data Flow Diagrams
-
-Figure[]: the data flow of our program
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/data_flow.png)
+<p align = center>Figure 2: the data flow of our program</p>
 
 #### 2.4 UML Diagrams showing Object Definition/Inheritance
-
-Figure[]: the UML diagram of our program
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/uml.jpg)
+<p align = center>Figure 3: the UML diagram of our program</p>
 
 ### 3. Graphical Interface and Input data
 #### 3.1 Graphical Interface
 We use Qt to develop our graphical interface. A picture of our program is shown as Figure.
 
 The GUI mainly consists of two parts: on the left is a QVTKOpenGLWidget which shows the rendering results using VTK, on the right are radiobuttons, checkboxes, and sliders, which can properly deal with user inputs.
- 
-The first radiobutton ‘Pressure’ is used to display pressure data on a given x-y surface in the chosen .vtu data file. If the data file contains pressure data, it will show the visualization results as Figure.
- 
-The second radiobutton ‘Q-criterion’ is used to display q-criterion data in the chosen .vtu data file. If the data file contains Q-criterion data, it will show the visualization results as Figure.
- 
-The third radiobutton ‘Pressure on Object' can only be selected if the input dataset contains object data, which is stored in vtkpolydata class, and the corresponding pressure data. If the radiobutton ‘Pressure on Object' is selected, the visualization result is shown as Figure. 
- 
-And it shows the pressure on these objects as described. 
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/default.png)
+<p align = center>Figure 4: The default look of the program</p>
 
-The fourth radiobutton is used to display velocity data if the data files contain a velocity field in the form of a vector field instead of a scalar field. Otherwise, it throws an error. This is shown in Figure.
- 
-The checkbox named ‘Streamline On’ is only available when the dataset contains streamline data. The visualization result is shown in Figure().
- 
+The first radiobutton ‘Pressure’ is used to display pressure data on a given x-y surface in the chosen .vtu data file. If the data file contains pressure data, it will show the visualization results as Figure 5.
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/p.png)
+<p align = center>Figure 5: Pressure</p>
+
+The second radiobutton ‘Q-criterion’ is used to display q-criterion data in the chosen .vtu data file. If the data file contains Q-criterion data, it will show the visualization results as Figure 6.
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/q.png)
+<p align = center>Figure 6: Q-criterion</p>
+
+The third radiobutton ‘Pressure on Object' can only be selected if the input dataset contains object data, which is stored in vtkpolydata class, and the corresponding pressure data. If the radiobutton ‘Pressure on Object' is selected, the visualization result is shown as Figure 7. 
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/po.png)
+<p align = center>Figure 7: Pressure on objects</p><br>
+
+The fourth radiobutton is used to display velocity data if the data files contain a velocity field in the form of a vector field instead of a scalar field. Otherwise, it throws an error. This is shown in Figure 8.
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/u.png)
+<p align = center>Figure 8: Velocity in vector field</p>
+
+The checkbox named ‘Streamline On’ is only available when the dataset contains streamline data. The visualization result is shown in Figure 9.
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/streamline.png)
+<p align = center>Figure 9: Streamlines for vector field</p>
+
 On the contrast, the first slider named ‘Streamline (for scalar field only)’ will calculate streamlines onsite but this feature is only available for the dataset that contains scalar velocity field as shown in its name.
 
 The second slider is called ‘Choose surface (for P)’ is used to choose the x-y surface that user would like to visualize. In other words, the slider bar is projected onto the z values of the given dataset. From left to right the bar is corresponding to the z value from small to large.
@@ -75,13 +85,13 @@ The menu bar contains two options, File and About. The former provides users the
 
 Our goal for this part is to make the rendering module multi-threaded. After a comprehensive investigation, We found that the many functions in VTK are not thread-safe [2], and we did not find the classes in VTK that can help us to accomplish multi-threading in rendering. So we decide to add multi-threading features in the data read-in module. Typically, a complete airflow dataset contains both air data, which is stored in a .vtu file and also object data, which is stored in one or more .vtp files. We then use one thread to read the airflow dataset and another thread to read object file. The multi-threading is implemented in the class constructor (`mainwindow::mainwindow()`) and in the slot function (`mainwindow::open()`).
 
-Figure[]: the thread organization of data read-in part
+<p align = center><img src = "https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/thread.png" height = "400" /></p>
+<p align = center>Figure 10: the thread organization of data read-in part</p>
 
 #### 3.3 Exception Handling
 
 In our program, we use exception handling to determine if the dataset has the data that we need for visualization. We defined an exception structure named no_data. Every time our program wants to read a certain type of data from the dataset, for example, Q-criterion data from the dataset, we use a try catch block to test if this data is available. If there is no corresponding data in the dataset, We throw the exception no_data, which prevent our program from ultimately crashing. In the catch block, We use Qt to pump out a message box to warn the user that the attribute they requested for visualization is not available. Meanwhile, our program will stop and wait for the user to select other visualization options.
 
----
 #### 3.4 Numerical Computation
 1. The computation for the absolute value of velocity<br>
 From the scalar field dataset, each point’s velocity values are stored in three corresponding data arrays: u, v, and w, which are three Cartesian velocity components <img src="https://latex.codecogs.com/gif.latex?(x,y,z)"/> . As we want to visualize the velocity value as colored points, we need to first compute the absolute velocity value of every point. Thus we use the formula: <p align =center><img src="https://latex.codecogs.com/gif.latex?velocity=\sqrt{u^2+v^2+w^2}" style="border:none;"></p>
@@ -108,12 +118,15 @@ After we get a series of points positions, we can use another VTK function vtkPo
 As the VTK library on CCV is missing some critical Qt/VTK interacting libraries that are needed by our program, we then chose OS X as the platform to use. For a new Mac, the first step is to appropriately set up the environment for our program to run. 
 
 The first step is to install Qt. You can download Qt from this website: https://www.qt.io/download. From this website, you will get a disk image (.dmg) file, which contains an online installer.
-
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/qt.png)
+<p align = center>Figure 11: Qt installation</p>
 
 Open the installer, follow the instructions for each step. If you don’t know what you are supposed to do, simply follow the default selection until the whole process is done. (Note: you may need to register an account for Qt.) In this process, you will be able to choose the version that you would like to install. The version we use is Qt 5.11.0.
 
 Then, you can download VTK from this website: https://www.vtk.org/download/. The version we use is VTK-8.1.2, which is the latest release for now (12/16/2018). In this case, what we have downloaded is the source code of VTK, so we now need to compile the code and install the library to our system. Simply make a directory ‘build’ under the root folder of VTK code, and then: `cd build`. Next step is to use CMake to generate the makefile. We recommend using CMake-GUI for this process (you can download here: https://cmake.org/download/). The picture shows how the GUI looks like:
- 
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/cmake.png)
+<p align = center>Figure 2: CMake GUI</p>
+
 Correctly select the directory for the VTK source code and also the directory for the generated build files. Please make sure ‘VTK_Group_Qt’ and ‘BUILD_SHARED_LIBS’ are checked, then press ‘Configure’. You may have to designate the path for Qt cmake files. Its default path should be ‘/Users/$YOUR_USER_NAME/Qt/5.xx.x/clang_64/lib/cmake/Qt5’. Keep configuring until all the red error messages are properly dealt with, then press ‘Generate’. In this case, the build files should be written to the build folder correctly.
 
 Next step is to run `make` in the build directory. Use `make -jN` to speed up this process by using N threads at the same time. When it’s completed without errors, use `make install` to write the library files into your system so they can be appropriately called by default without having to specify their path. After this, your VTK libraries are correctly installed.
@@ -126,9 +139,11 @@ Additionally, we use OpenFOAM for data generation. If you want to use custom dat
 We use Qt Creator to build our program, and ultimately we get a .app file, which can be directly run by users.
 
 So you can simply double-click on our program. And you’ll get a dialog to choose the folder you would like to open.
- 
-After choosing the folder, click ‘Open’ or simply double-click on the folder you would like to open. Here is a sample showing the layout of the program:
- 
+![image](https://github.com/ENGN2912B-2018/DV-B/blob/master/figures/open.png)
+<p align = center>Figure 13: Dialog for open files</p>
+
+After choosing the folder, click ‘Open’ or simply double-click on the folder you would like to open. Figure 4 is a sample showing the layout of the program:
+
 Then you can click on the radiobuttons, checkboxes, and sliders on the right to display the data you expect to visualize.
 
 In the dataset, we focus on several important properties: pressure (P), Q-criterion (Q), velocity and streamlines. Please note that due to the difference between scalar field data and vector field data, some features may not be supported by the dataset you use. You will get error messages when trying to enable unsupported features.
@@ -201,3 +216,8 @@ Zhiyu Wang
 - Implemented the streamline drawing module for scalar field dataset
 - Add the visualization module for absolute velocity value
 - Implemented the streamline visualization module for vector field data. 
+---
+### Reference
+[1]	Compute Canada, website, https://www.computecanada.ca/.  Accessed:  18-December -2018.
+
+[2]	VTK Documentation, website, https://www.vtk.org/doc/nightly/html/annotated.html Accessed:  18-December -2018
